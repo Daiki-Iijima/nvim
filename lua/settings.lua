@@ -6,6 +6,10 @@ vim.opt.shiftwidth = 2 -- 自動インデント時に使うスペース数
 vim.opt.tabstop = 2 -- タブ文字を表示するときの幅
 vim.opt.softtabstop = 2 -- TabキーやBackspaceで扱うスペース数
 
+vim.opt.foldmethod = "indent"
+vim.opt.foldlevel = 99      -- デフォルトでは全部開いておく
+vim.opt.foldenable = true   -- 折りたたみを有効化
+
 -- Windows用の設定 --
 vim.opt.encoding     = "utf-8"
 vim.opt.fileencoding = "utf-8"
