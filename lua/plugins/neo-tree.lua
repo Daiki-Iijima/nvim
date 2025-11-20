@@ -31,7 +31,7 @@ return {
     })
 
     -- キーマップ（telescope感覚で開ける）
-    vim.keymap.set("n", "<leader>e", ":Neotree toggle left<CR>", { desc = "Toggle NeoTree" })
-    vim.keymap.set("n", "<leader>o", ":Neotree reveal<CR>", { desc = "Reveal current file" })
+    vim.keymap.set("n", "<C-n>", ":Neotree toggle left<CR>", { desc = "Toggle NeoTree" })
+    vim.keymap.set("n", "<C-o>", ":Neotree reveal<CR>", { desc = "Reveal current file" })
   end,
 }
