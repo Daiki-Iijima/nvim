@@ -1,35 +1,20 @@
 return {
-  -- Mason 本体
-  {
-    "williamboman/mason.nvim",
-    config = true,
-  },
-
-  -- Mason ↔ LSP 連携
-  {
-    "williamboman/mason-lspconfig.nvim",
-    dependencies = { "williamboman/mason.nvim" },
-    opts = {
-      -- Mason がインストールを管理する LSP（Swift の sourcekit は含めない）
-      ensure_installed = {
-        -- 例:
-        -- "lua_ls",
-        -- "tsserver",
-      },
-      automatic_installation = true,
-    },
-  },
-
-  -- LSP 本体
+  --------------------------------------------------------------------
+  -- LSP 共通設定 + 各言語セットアップ
+  --------------------------------------------------------------------
   {
     "neovim/nvim-lspconfig",
     event = { "BufReadPre", "BufNewFile" },
     config = function()
-      require("lang._loader")
+      -- ここで Neovim 組み込み LSP の設定を流すだけ
+      -- ※ lspconfig の `require("lspconfig")` はどこでも呼ばない
+      require("lang._loader").setup()
     end,
   },
 
-  -- 補完
+  --------------------------------------------------------------------
+  -- nvim-cmp（補完）
+  --------------------------------------------------------------------
   {
     "hrsh7th/nvim-cmp",
     event = "InsertEnter",
@@ -77,7 +62,9 @@ return {
     end,
   },
 
-  -- Treesitter（Swift 用）
+  --------------------------------------------------------------------
+  -- Treesitter
+  --------------------------------------------------------------------
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
@@ -91,7 +78,9 @@ return {
     end,
   },
 
-  -- フォーマッタ統合
+  --------------------------------------------------------------------
+  -- Conform（フォーマッタ統合）
+  --------------------------------------------------------------------
   {
     "stevearc/conform.nvim",
     event = { "BufReadPre", "BufNewFile" },
@@ -100,20 +89,7 @@ return {
         timeout_ms = 2000,
         lsp_fallback = true,
       },
-      -- 実際の割当は lang/swift.lua 側でやってる
-    },
-  },
-
-  -- Mason でフォーマッタもまとめて入れる
-  {
-    "WhoIsSethDaniel/mason-tool-installer.nvim",
-    dependencies = { "williamboman/mason.nvim" },
-    opts = {
-      ensure_installed = {
-        -- "swift-format",  -- ← ここを消す（Mason にこのパッケージは存在しない）
-      },
-      run_on_start = true,
+      formatters_by_ft = {}, -- lang 側で swift / lua を足していく
     },
   },
 }
-
