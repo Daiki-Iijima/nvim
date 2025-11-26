@@ -12,6 +12,7 @@ return {
       popup_border_style = "rounded",
       enable_git_status = true,
       enable_diagnostics = true,
+      hide_dotfiles=false,
       sort_case_insensitive = true,
       filesystem = {
         filtered_items = {
@@ -30,7 +31,7 @@ return {
       },
     })
 
-    -- キーマップ（telescope感覚で開ける）
+    -- キーマップ
     vim.keymap.set("n", "<C-n>", ":Neotree toggle left<CR>", { desc = "Toggle NeoTree" })
     vim.keymap.set("n", "<C-o>", ":Neotree reveal<CR>", { desc = "Reveal current file" })
   end,
