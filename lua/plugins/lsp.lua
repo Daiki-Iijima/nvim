@@ -44,6 +44,7 @@ return {
 
         mapping = cmp.mapping.preset.insert({
           ["<CR>"] = cmp.mapping.confirm({ select = true }),
+          ["<C-Space>"] = cmp.mapping.complete(),  -- ctrl + space : 補完ウィドウの表示
           ["<Tab>"] = function(fallback)
             if cmp.visible() then
               cmp.select_next_item()
