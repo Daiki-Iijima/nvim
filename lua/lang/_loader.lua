@@ -54,12 +54,14 @@ function M.setup()
   require("lang.swift").setup()
   require("lang.lua").setup()
   require("lang.python").setup()
+  require("lang.go").setup()
 
   -- 有効化したい LSP を起動
   vim.lsp.enable({
     "sourcekit", -- Swift
     "lua_ls",    -- Lua
-    "pyright"    -- python
+    "pyright",   -- python
+    "gopls",     -- Go
   })
 end
 
