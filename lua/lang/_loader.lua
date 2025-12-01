@@ -1,7 +1,7 @@
 local M = {}
 
--- 共通 capabilities（nvim-cmp 連携用）
-local function make_capabilities()
+-- 共通 capabilities（nvim-cmp 連携用） 
+  local function make_capabilities()
   local capabilities = vim.lsp.protocol.make_client_capabilities()
   local ok_cmp, cmp_lsp = pcall(require, "cmp_nvim_lsp")
   if ok_cmp then
@@ -53,11 +53,13 @@ function M.setup()
   -- 言語ごとの設定（ここで個別モジュールを呼ぶ）
   require("lang.swift").setup()
   require("lang.lua").setup()
+  require("lang.python").setup()
 
   -- 有効化したい LSP を起動
   vim.lsp.enable({
     "sourcekit", -- Swift
     "lua_ls",    -- Lua
+    "pyright"    -- python
   })
 end
 
