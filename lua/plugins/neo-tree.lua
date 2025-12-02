@@ -12,7 +12,7 @@ return {
       popup_border_style = "rounded",
       enable_git_status = true,
       enable_diagnostics = true,
-      hide_dotfiles=false,
+      hide_dotfiles = false,
       sort_case_insensitive = true,
       filesystem = {
         filtered_items = {
@@ -27,6 +27,21 @@ return {
         width = 30,
         mappings = {
           ["<space>"] = "none", -- スペース無効化（誤爆防止）
+          -- ⬅️ 狭くする
+          ["<C-h>"] = {
+            function(state)
+              vim.cmd("vertical resize -5")
+            end,
+            desc = "Shrink Neo-tree window",
+          },
+
+          -- ➡️ 広げる
+          ["<C-l>"] = {
+            function(state)
+              vim.cmd("vertical resize +5")
+            end,
+            desc = "Expand Neo-tree window",
+          },
         },
       },
     })
