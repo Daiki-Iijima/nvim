@@ -7,10 +7,10 @@ vim.g.mapleader = " "
 -----------------------------------------------------
 -- 基本操作
 -----------------------------------------------------
-map("n", "<leader>w", ":w<CR>", opts)       -- 保存
-map("n", "<leader>x", ":wq<CR>", opts)      -- 保存して終了
-map("n", "<leader>q", ":q<CR>", opts)       -- 終了
-map("n", "<leader>Q", ":q!<CR>", opts)      -- 強制終了
+map("n", "<leader>w", ":w<CR>", opts)  -- 保存
+map("n", "<leader>x", ":wq<CR>", opts) -- 保存して終了
+map("n", "<leader>q", ":q<CR>", opts)  -- 終了
+map("n", "<leader>Q", ":q!<CR>", opts) -- 強制終了
 
 -----------------------------------------------------
 -- ウィンドウ / バッファ移動
@@ -57,19 +57,3 @@ map("n", "<S-l>", "$", opts)
 -----------------------------------------------------
 map("i", "jj", "<Esc>", opts)
 map("i", "<C-c>", "<Esc>", opts)
-
------------------------------------------------------
--- ターミナル操作の快適化
------------------------------------------------------
-
--- ターミナルを下に開いてすぐ入力モードにする
-vim.keymap.set("n", "<leader>t", function()
-  vim.cmd("botright 15split | terminal")  -- 下に高さ15行で開く
-  vim.cmd("startinsert")                  -- 自動で入力モードへ
-end, { desc = "Open terminal below" })
-
--- <Esc> でノーマルモードに戻る（terminalモード用）
-vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { desc = "Exit terminal insert mode" })
-
--- ノーマルモードで "qq" を押すとターミナルを閉じる
-vim.keymap.set("t", "qq", [[<C-\><C-n>:q!<CR>]], { desc = "Close terminal quickly" })

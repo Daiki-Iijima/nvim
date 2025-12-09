@@ -1,7 +1,7 @@
 local M = {}
 
--- 共通 capabilities（nvim-cmp 連携用） 
-  local function make_capabilities()
+-- 共通 capabilities（nvim-cmp 連携用）
+local function make_capabilities()
   local capabilities = vim.lsp.protocol.make_client_capabilities()
   local ok_cmp, cmp_lsp = pcall(require, "cmp_nvim_lsp")
   if ok_cmp then
@@ -38,6 +38,18 @@ local function on_attach(_, bufnr)
   vim.keymap.set("n", "<leader>f", function()
     vim.lsp.buf.format({ async = true })
   end, opts)
+
+  -- 診断を Quickfix に流して開く
+  vim.keymap.set("n", "<leader>dq", function()
+    vim.diagnostic.setqflist()
+    vim.cmd("copen")
+  end, { desc = "Diagnostics → quickfix" })
+
+  -- 現在バッファだけ Quickfix に流す
+  vim.keymap.set("n", "<leader>db", function()
+    vim.diagnostic.setqflist({ bufnr = 0 })
+    vim.cmd("copen")
+  end, { desc = "Buffer diagnostics → quickfix" })
 end
 
 function M.setup()
@@ -55,6 +67,7 @@ function M.setup()
   require("lang.lua").setup()
   require("lang.python").setup()
   require("lang.go").setup()
+  require("lang.csharp").setup()
 
   -- 有効化したい LSP を起動
   vim.lsp.enable({
@@ -62,8 +75,8 @@ function M.setup()
     "lua_ls",    -- Lua
     "pyright",   -- python
     "gopls",     -- Go
+    "csharp_ls", -- C#
   })
 end
 
 return M
-
