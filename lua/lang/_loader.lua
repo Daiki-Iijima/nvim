@@ -68,6 +68,7 @@ function M.setup()
   require("lang.python").setup()
   require("lang.go").setup()
   require("lang.csharp").setup()
+  require("lang.cpp").setup()
 
   -- 有効化したい LSP を起動
   vim.lsp.enable({
@@ -76,6 +77,7 @@ function M.setup()
     "pyright",   -- python
     "gopls",     -- Go
     "csharp_ls", -- C#
+    "clangd",    -- C,C++
   })
 end
 
