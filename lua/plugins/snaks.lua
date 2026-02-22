@@ -7,7 +7,7 @@ return {
     -- ==== Snacks モジュール有効化 ====
     picker = {
       enabled = true, -- FZF / Telescope 代わり
-      -- ★ Explorer の picker に対してだけ list のキーを上書き
+      -- Explorer の picker に対してだけ list のキーを上書き
       sources = {
         explorer = {
           win = {
@@ -20,6 +20,11 @@ return {
           },
         },
       },
+    },
+    scratch = { -- そのディレクトリで使えるメモ？
+      enabled = true,
+      filekey = { cwd = false, branch = false, count = false },
+      ft = "markdown",
     },
     input = { enabled = true },     -- LSP rename の入力 UI がキレイになる
     indent = { enabled = true },    -- インデント可視化（hlchunk の代わり候補）
@@ -49,6 +54,9 @@ return {
     map("n", "<leader>fb", function() Snacks.picker.buffers() end, { desc = "Buffers" })
     map("n", "<leader>fh", function() Snacks.picker.help() end, { desc = "Help" })
     map("n", "<leader>fk", function() Snacks.picker.keymaps() end, { desc = "Keymaps" })
+
+    -- ===== Scratch ====
+    map("n", "<leader>S", function() Snacks.scratch() end, { desc = "スクラッチファイルを開く" })
 
     -- ===== LSP =====
     map("n", "<leader>lr", vim.lsp.buf.rename, { desc = "LSP Rename" })

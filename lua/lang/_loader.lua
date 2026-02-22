@@ -68,14 +68,16 @@ function M.setup()
   require("lang.python").setup()
   require("lang.go").setup()
   require("lang.csharp").setup()
+  require("lang.rust").setup()
 
   -- 有効化したい LSP を起動
   vim.lsp.enable({
-    "sourcekit", -- Swift
-    "lua_ls",    -- Lua
-    "pyright",   -- python
-    "gopls",     -- Go
-    "csharp_ls", -- C#
+    "sourcekit",     -- Swift
+    "lua_ls",        -- Lua
+    "pyright",       -- python
+    "gopls",         -- Go
+    "csharp_ls",     -- C#
+    "rust_analyzer", -- Rust
   })
 end
 
