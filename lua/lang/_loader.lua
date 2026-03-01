@@ -37,6 +37,7 @@ local function on_attach(_, bufnr)
   vim.keymap.set("n", "]d", function()
     vim.diagnostic.jump({ count = 1 })
   end, opts)
+
   vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, opts)
 
   -- 🧹 フォーマット
@@ -74,6 +75,7 @@ function M.setup()
   require("lang.go").setup()
   require("lang.csharp").setup()
   require("lang.rust").setup()
+  require("lang.php").setup()
 
   -- 有効化したい LSP を起動
   vim.lsp.enable({
@@ -83,6 +85,7 @@ function M.setup()
     "gopls",         -- Go
     "csharp_ls",     -- C#
     "rust_analyzer", -- Rust
+    "intelephense",  -- PHP
   })
 end
 
