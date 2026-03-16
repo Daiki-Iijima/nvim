@@ -1,9 +1,17 @@
-return{
+-- =============================================================================
+-- nvim-autopairs: 括弧・クォートの自動閉じ
+-- =============================================================================
+-- `(` を入力すると `)` が自動補完される。
+-- 対応する記号: () [] {} "" '' `` など
+--
+-- nvim-cmp と連携しており、Enter で補完確定したときに括弧も自動で閉じる。
+-- （連携設定は nvim-cmp 側で cmp.event:on を使って行われる）
+-- =============================================================================
+
+return {
   {
-    'windwp/nvim-autopairs',
-    event = "InsertEnter",
-    config = true
-    -- use opts = {} for passing setup options
-    -- this is equivalent to setup({}) function
-  }
+    "windwp/nvim-autopairs",
+    event = "InsertEnter", -- 挿入モードに入ったときだけ読み込む（起動を速くするため）
+    config = true,         -- デフォルト設定で setup() を呼ぶ（opts = {} と同等）
+  },
 }

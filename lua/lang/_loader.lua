@@ -10,53 +10,266 @@ local function make_capabilities()
   return capabilities
 end
 
+-- コードブロック・インラインコードをプレースホルダに退避
+local function mask_code(text)
+  local blocks = {}
+  local counter = 0
+  local result_lines = {}
+  local in_fence = false
+  local fence_lines = {}
+  local fence_ph = nil
+
+  for _, line in ipairs(vim.split(text, "\n", { plain = true })) do
+    if not in_fence and line:match("^```") then
+      in_fence = true
+      fence_lines = { line }
+      counter = counter + 1
+      fence_ph = '<x id="' .. counter .. '"/>'
+      table.insert(result_lines, fence_ph)
+    elseif in_fence and line:match("^```") then
+      in_fence = false
+      table.insert(fence_lines, line)
+      blocks[fence_ph] = table.concat(fence_lines, "\n")
+      fence_lines = {}
+      fence_ph = nil
+    elseif in_fence then
+      table.insert(fence_lines, line)
+    else
+      local masked = line:gsub("`([^`\n]+)`", function(code)
+        counter = counter + 1
+        local ph = '<x id="' .. counter .. '"/>'
+        blocks[ph] = "`" .. code .. "`"
+        return ph
+      end)
+      table.insert(result_lines, masked)
+    end
+  end
+  if in_fence and fence_ph then
+    blocks[fence_ph] = table.concat(fence_lines, "\n")
+  end
+
+  return table.concat(result_lines, "\n"), blocks
+end
+
+-- プレースホルダをコードブロックに戻す
+-- Google Translate がスペースを入れる場合があるので id 番号でパターンマッチ
+local function unmask_code(text, blocks)
+  return (text:gsub('<x%s+id%s*=%s*"(%d+)"%s*/>', function(id)
+    local ph = '<x id="' .. id .. '"/>'
+    local content = blocks[ph]
+    return content and content:gsub("%%", "%%%%") or ph
+  end))
+end
+
+-- ホバー内容を日本語に翻訳してフロート表示
+local function translated_hover(bufnr)
+  local client = vim.lsp.get_clients({ bufnr = bufnr })[1]
+  local encoding = client and client.offset_encoding or "utf-16"
+  local params = vim.lsp.util.make_position_params(0, encoding)
+  vim.lsp.buf_request(bufnr, "textDocument/hover", params, function(_, result)
+    if not result or not result.contents then return end
+
+    -- ホバー内容をテキストに変換
+    local contents = result.contents
+    local text = ""
+    if type(contents) == "string" then
+      text = contents
+    elseif type(contents) == "table" then
+      if contents.value then
+        text = contents.value
+      else
+        local parts = {}
+        for _, item in ipairs(contents) do
+          table.insert(parts, type(item) == "string" and item or (item.value or ""))
+        end
+        text = table.concat(parts, "\n")
+      end
+    end
+
+    if text == "" then return end
+
+    -- コードブロックを退避してから翻訳
+    local masked_text, code_blocks = mask_code(text)
+
+    -- Google Translate（無料エンドポイント）で日本語に翻訳
+    vim.system(
+      { "curl", "-s", "https://translate.googleapis.com/translate_a/single",
+        "-G", "--data-urlencode", "q=" .. masked_text,
+        "-d", "client=gtx&sl=auto&tl=ja&dt=t" },
+      { text = true },
+      function(res)
+        if res.code ~= 0 or not res.stdout or res.stdout == "" then
+          vim.schedule(function() vim.lsp.buf.hover() end)
+          return
+        end
+
+        local ok, data = pcall(vim.json.decode, res.stdout)
+        if not ok or type(data) ~= "table" or not data[1] then
+          vim.schedule(function() vim.lsp.buf.hover() end)
+          return
+        end
+
+        local translated_parts = {}
+        for _, segment in ipairs(data[1]) do
+          if type(segment) == "table" and type(segment[1]) == "string" then
+            table.insert(translated_parts, segment[1])
+          end
+        end
+        local translated = table.concat(translated_parts, "")
+
+        if translated == "" then
+          vim.schedule(function() vim.lsp.buf.hover() end)
+          return
+        end
+
+        -- コードブロックを元に戻す
+        translated = unmask_code(translated, code_blocks)
+
+        vim.schedule(function()
+          local lines = vim.split(translated, "\n", { plain = true })
+          vim.lsp.util.open_floating_preview(lines, "markdown", {
+            border = "rounded",
+            focusable = true,
+          })
+        end)
+      end
+    )
+  end)
+end
+
+-- カーソル位置の診断を日本語に翻訳してフロート表示
+local function translated_diagnostic_float()
+  local diags = vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })
+  if vim.tbl_isempty(diags) then
+    vim.diagnostic.open_float()
+    return
+  end
+
+  -- メッセージを結合
+  local messages = {}
+  for _, d in ipairs(diags) do
+    local severity = ({
+      [vim.diagnostic.severity.ERROR] = "ERROR",
+      [vim.diagnostic.severity.WARN]  = "WARN",
+      [vim.diagnostic.severity.INFO]  = "INFO",
+      [vim.diagnostic.severity.HINT]  = "HINT",
+    })[d.severity] or "?"
+    table.insert(messages, "[" .. severity .. "] " .. d.message)
+  end
+  local text = table.concat(messages, "\n")
+
+  vim.system(
+    { "curl", "-s", "https://translate.googleapis.com/translate_a/single",
+      "-G", "--data-urlencode", "q=" .. text,
+      "-d", "client=gtx&sl=auto&tl=ja&dt=t" },
+    { text = true },
+    function(res)
+      if res.code ~= 0 or not res.stdout or res.stdout == "" then
+        vim.schedule(function() vim.diagnostic.open_float() end)
+        return
+      end
+
+      local ok, data = pcall(vim.json.decode, res.stdout)
+      if not ok or type(data) ~= "table" or not data[1] then
+        vim.schedule(function() vim.diagnostic.open_float() end)
+        return
+      end
+
+      local parts = {}
+      for _, segment in ipairs(data[1]) do
+        if type(segment) == "table" and type(segment[1]) == "string" then
+          table.insert(parts, segment[1])
+        end
+      end
+      local translated = table.concat(parts, "")
+
+      if translated == "" then
+        vim.schedule(function() vim.diagnostic.open_float() end)
+        return
+      end
+
+      vim.schedule(function()
+        local lines = vim.split(translated, "\n", { plain = true })
+        vim.lsp.util.open_floating_preview(lines, "markdown", {
+          border = "rounded",
+          focusable = true,
+        })
+      end)
+    end
+  )
+end
+
 -- 共通 on_attach（ここで LSP のショートカットを定義）
 local function on_attach(_, bufnr)
   local opts = { buffer = bufnr, silent = true }
 
   -- 🔍 定義/参照まわり
-  vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-  vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
-  vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
-  vim.keymap.set("n", "gt", vim.lsp.buf.type_definition, opts)
-  vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
+  vim.keymap.set("n", "gd", vim.lsp.buf.definition,    vim.tbl_extend("force", opts, { desc = "定義へジャンプ" }))
+  vim.keymap.set("n", "gD", vim.lsp.buf.declaration,   vim.tbl_extend("force", opts, { desc = "宣言へジャンプ" }))
+  vim.keymap.set("n", "gi", vim.lsp.buf.implementation, vim.tbl_extend("force", opts, { desc = "実装へジャンプ" }))
+  vim.keymap.set("n", "gt", vim.lsp.buf.type_definition, vim.tbl_extend("force", opts, { desc = "型定義へジャンプ" }))
+  vim.keymap.set("n", "gr", vim.lsp.buf.references,    vim.tbl_extend("force", opts, { desc = "参照一覧を表示" }))
 
   -- ℹ️ 情報表示
-  vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
-  vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
+  vim.keymap.set("n", "K",    function() translated_hover(bufnr) end, vim.tbl_extend("force", opts, { desc = "ホバー情報を日本語で表示" }))
+  vim.keymap.set("n", "gK",   vim.lsp.buf.hover,         vim.tbl_extend("force", opts, { desc = "ホバー情報を原文で表示" }))
+  vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, vim.tbl_extend("force", opts, { desc = "シグネチャヘルプを表示" }))
 
   -- 🛠 リファクタリング
-  vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
-  vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
+  vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename,      vim.tbl_extend("force", opts, { desc = "シンボルをリネーム" }))
+  vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, vim.tbl_extend("force", opts, { desc = "コードアクションを表示" }))
+
+  -- 🪟 ホバーウィンドウのスクロール
+  local function scroll_float(delta)
+    local win = vim.b.lsp_floating_preview
+    if not win or not vim.api.nvim_win_is_valid(win) then return false end
+    vim.api.nvim_win_call(win, function()
+      local view = vim.fn.winsaveview()
+      view.topline = math.max(1, view.topline + delta)
+      vim.fn.winrestview(view)
+    end)
+    return true
+  end
+
+  vim.keymap.set("n", "<C-d>", function()
+    if not scroll_float(4) then return "<C-d>" end
+  end, { expr = true, buffer = bufnr, silent = true, desc = "ホバー/画面を下スクロール" })
+
+  vim.keymap.set("n", "<C-u>", function()
+    if not scroll_float(-4) then return "<C-u>" end
+  end, { expr = true, buffer = bufnr, silent = true, desc = "ホバー/画面を上スクロール" })
 
   -- ⚠️ 診断ジャンプ
   vim.keymap.set("n", "[d", function()
     vim.diagnostic.jump({ count = -1 })
-  end, opts)
+  end, vim.tbl_extend("force", opts, { desc = "前の診断エラーへ移動" }))
 
   vim.keymap.set("n", "]d", function()
     vim.diagnostic.jump({ count = 1 })
-  end, opts)
+  end, vim.tbl_extend("force", opts, { desc = "次の診断エラーへ移動" }))
 
-  vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, opts)
+  vim.keymap.set("n", "<leader>e", translated_diagnostic_float,
+    vim.tbl_extend("force", opts, { desc = "診断エラーの詳細を日本語でフロート表示" }))
 
   -- 🧹 フォーマット
   vim.keymap.set("n", "<leader>f", function()
     vim.lsp.buf.format({ async = true })
-  end, opts)
+  end, vim.tbl_extend("force", opts, { desc = "ファイルをフォーマット" }))
 
   -- 診断を Quickfix に流して開く
   vim.keymap.set("n", "<leader>dq", function()
     vim.diagnostic.setqflist()
     vim.cmd("copen")
-  end, { desc = "Diagnostics → quickfix" })
+  end, { desc = "全診断エラーをQuickfixに表示" })
 
   -- 現在バッファだけ Quickfix に流す
   vim.keymap.set("n", "<leader>db", function()
     vim.diagnostic.setqflist({ bufnr = 0 })
     vim.cmd("copen")
-  end, { desc = "Buffer diagnostics → quickfix" })
+  end, { desc = "現在バッファの診断エラーをQuickfixに表示" })
 end
+
+M.on_attach = on_attach
 
 function M.setup()
   local capabilities = make_capabilities()
@@ -74,18 +287,29 @@ function M.setup()
   require("lang.python").setup()
   require("lang.go").setup()
   require("lang.csharp").setup()
-  require("lang.rust").setup()
+  require("lang.rust").setup()   -- rustaceanvim が管理するため実質 no-op
   require("lang.php").setup()
+  require("lang.typescript").setup()
+  require("lang.web").setup()    -- HTML / CSS / Tailwind / Emmet / JSON / YAML
 
   -- 有効化したい LSP を起動
+  -- ※ rust_analyzer は rustaceanvim が管理するため除外
   vim.lsp.enable({
-    "sourcekit",     -- Swift
-    "lua_ls",        -- Lua
-    "pyright",       -- python
-    "gopls",         -- Go
-    "csharp_ls",     -- C#
-    "rust_analyzer", -- Rust
-    "intelephense",  -- PHP
+    "sourcekit",              -- Swift
+    "lua_ls",                 -- Lua
+    "pyright",                -- Python
+    "gopls",                  -- Go
+    "csharp_ls",              -- C#
+    "intelephense",           -- PHP
+    "ts_ls",                  -- TypeScript / JavaScript
+    "eslint",                 -- ESLint
+    -- Web
+    "html",                   -- HTML
+    "cssls",                  -- CSS / SCSS / Less
+    "tailwindcss",            -- Tailwind CSS
+    "emmet_language_server",  -- Emmet
+    "jsonls",                 -- JSON
+    "yamlls",                 -- YAML
   })
 end
 

@@ -1,12 +1,29 @@
-return{
+-- =============================================================================
+-- nvim-surround: テキストを囲む・囲みを変える・削除する
+-- =============================================================================
+-- テキストオブジェクトを指定の記号で囲む操作を提供する。
+--
+-- 主な操作（ノーマルモード）:
+--   ys{モーション}{記号}  -- 指定範囲を囲む
+--     例: ysiw"  → カーソル下の単語を " で囲む → "word"
+--     例: ys3j(  → 3行を () で囲む
+--   cs{旧}{新}           -- 囲みを変更する
+--     例: cs"'  → "word" → 'word'
+--     例: cs(<  → (word) → <word>
+--   ds{記号}             -- 囲みを削除する
+--     例: ds"   → "word" → word
+--
+-- ビジュアルモード:
+--   S{記号}              -- 選択範囲を記号で囲む
+-- =============================================================================
+
+return {
   {
     "kylechui/nvim-surround",
-    version = "^3.0.0", -- Use for stability; omit to use `main` branch for the latest features
-    event = "VeryLazy",
+    version = "^3.0.0", -- メジャーバージョンを固定して破壊的変更を防ぐ
+    event = "VeryLazy", -- 起動後の最初の操作まで読み込みを遅らせる
     config = function()
-      require("nvim-surround").setup({
-        -- Configuration here, or leave empty to use defaults
-      })
-    end
-  }
+      require("nvim-surround").setup()
+    end,
+  },
 }

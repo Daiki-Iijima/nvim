@@ -1,12 +1,23 @@
+-- =============================================================================
+-- gruvbox.nvim: カラースキーム
+-- =============================================================================
+-- Neovim 向けに書き直された Gruvbox テーマ。
+-- レトロな雰囲気のウォームカラーで目に優しい配色。
+--
+-- contrast: "hard" / "medium"（デフォルト）/ "soft" から選択
+--   soft   → 背景を少し明るく・コントラストを抑えめにする
+-- transparent_mode: true にするとターミナルの背景が透けて見える
+-- =============================================================================
+
 return {
   {
     "ellisonleao/gruvbox.nvim",
-    lazy = false,
-    priority = 1000,
+    lazy = false,        -- 起動時に必ず読み込む（カラースキームは早期ロード必須）
+    priority = 1000,     -- 他のプラグインより先にロードして配色を確定させる
     config = function()
       require("gruvbox").setup({
-        contrast = "soft",
-        transparent_mode = true,
+        contrast = "soft",         -- 背景のコントラストを抑えて目に優しくする
+        transparent_mode = true,   -- ターミナルの背景透過を活かす
       })
       vim.cmd("colorscheme gruvbox")
     end,

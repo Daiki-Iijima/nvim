@@ -19,6 +19,9 @@ return {
             },
           },
         },
+        keymaps = {
+          layout = { preview = false }, -- キーマップ一覧はプレビュー不要
+        },
       },
     },
     scratch = { -- そのディレクトリで使えるメモ？
@@ -32,7 +35,21 @@ return {
     quickfile = { enabled = true }, -- `nvim file` が速くなる
     lazygit = { enabled = true },   -- lazygit フロート
     rename = { enabled = true },    -- ファイルリネーム + LSP 連携
-    terminal = { enabled = true },  -- ターミナル表示
+    terminal = {
+      enabled = true,
+      win = {
+        style = "terminal",
+        keys = {
+          -- Esc 1回でノーマルモード（コピーモード）に入る
+          term_normal = {
+            "<esc>",
+            "<C-\\><C-n>",
+            mode = "t",
+            desc = "Esc でノーマルモードへ",
+          },
+        },
+      },
+    },
 
     -- Explorer 本体の設定（こっちは「モジュール」用）
     explorer = {
@@ -48,36 +65,35 @@ return {
     local map = vim.keymap.set
 
     -- ===== Picker =====
-    map("n", "<leader>ff", function() Snacks.picker.files() end, { desc = "Find Files" })
-    map("n", "<leader>fg", function() Snacks.picker.grep() end, { desc = "Live Grep" })
-    map("n", "<leader>fr", function() Snacks.picker.recent() end, { desc = "Recent Files" })
-    map("n", "<leader>fb", function() Snacks.picker.buffers() end, { desc = "Buffers" })
-    map("n", "<leader>fh", function() Snacks.picker.help() end, { desc = "Help" })
-    map("n", "<leader>fk", function() Snacks.picker.keymaps() end, { desc = "Keymaps" })
+    map("n", "<leader>ff", function() Snacks.picker.files() end,   { desc = "ファイルを検索して開く" })
+    map("n", "<leader>fg", function() Snacks.picker.grep() end,    { desc = "ファイル内の文字列を横断検索" })
+    map("n", "<leader>fr", function() Snacks.picker.recent() end,  { desc = "最近開いたファイルを表示" })
+    map("n", "<leader>fb", function() Snacks.picker.buffers() end, { desc = "開いているバッファ一覧" })
+    map("n", "<leader>fh", function() Snacks.picker.help() end,    { desc = "ヘルプを検索" })
+    map("n", "<leader>fk", function() Snacks.picker.keymaps() end, { desc = "キーマップ一覧を表示" })
 
     -- ===== Scratch ====
     map("n", "<leader>S", function() Snacks.scratch() end, { desc = "スクラッチファイルを開く" })
 
     -- ===== LSP =====
-    map("n", "<leader>lr", vim.lsp.buf.rename, { desc = "LSP Rename" })
-    map("n", "<leader>ld", Snacks.picker.lsp_definitions, { desc = "LSP Definitions" })
-    map("n", "<leader>lR", Snacks.picker.lsp_references, { desc = "LSP References" })
-    map("n", "<leader>li", Snacks.picker.lsp_implementations, { desc = "LSP Implementations" })
+    map("n", "<leader>lr", vim.lsp.buf.rename,              { desc = "LSP: シンボルをリネーム" })
+    map("n", "<leader>ld", Snacks.picker.lsp_definitions,   { desc = "LSP: 定義へジャンプ (Picker)" })
+    map("n", "<leader>lR", Snacks.picker.lsp_references,    { desc = "LSP: 参照一覧 (Picker)" })
+    map("n", "<leader>li", Snacks.picker.lsp_implementations, { desc = "LSP: 実装一覧 (Picker)" })
 
     -- ===== Git =====
     map("n", "<leader>lg", function()
       Snacks.lazygit()
-    end, { desc = "LazyGit (Snacks)" })
+    end, { desc = "LazyGit を開く" })
 
     -- ===== Explorer (toggle) =====
-    -- 通常バッファではこれが効く
     map("n", "<C-n>", function()
       Snacks.explorer()
-    end, { desc = "Toggle Explorer (Snacks)" })
+    end, { desc = "ファイルエクスプローラーを開閉" })
 
     -- ===== Terminal =====
     map({ "n", "t" }, "<C-/>", function()
       Snacks.terminal()
-    end, { desc = "Toggle Terminal (Snacks)" })
+    end, { desc = "ターミナルを開閉" })
   end,
 }
