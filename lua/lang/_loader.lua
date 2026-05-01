@@ -291,6 +291,7 @@ function M.setup()
   require("lang.php").setup()
   require("lang.typescript").setup()
   require("lang.web").setup()    -- HTML / CSS / Tailwind / Emmet / JSON / YAML
+  require("lang.cpp").setup()    -- C / C++ / Objective-C (clangd)
 
   -- 有効化したい LSP を起動
   -- ※ rust_analyzer は rustaceanvim が管理するため除外
@@ -303,6 +304,7 @@ function M.setup()
     "intelephense",           -- PHP
     "ts_ls",                  -- TypeScript / JavaScript
     "eslint",                 -- ESLint
+    "clangd",                 -- C / C++
     -- Web
     "html",                   -- HTML
     "cssls",                  -- CSS / SCSS / Less

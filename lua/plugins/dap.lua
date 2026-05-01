@@ -99,10 +99,14 @@ return {
         },
       }
 
-      -- macOS: lldb-dap（Homebrew LLVM）をフォールバックとして追加
+      -- lldb-dap: PATH 解決を優先し、なければ macOS Homebrew パスにフォールバック
+      local lldb_dap_cmd = vim.fn.exepath("lldb-dap")
+      if lldb_dap_cmd == "" then
+        lldb_dap_cmd = "/opt/homebrew/opt/llvm/bin/lldb-dap"
+      end
       dap.adapters.lldb = {
         type    = "executable",
-        command = "/opt/homebrew/opt/llvm/bin/lldb-dap",
+        command = lldb_dap_cmd,
         name    = "lldb",
       }
 

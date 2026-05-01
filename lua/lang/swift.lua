@@ -1,9 +1,13 @@
 local M = {}
 
 function M.setup()
-  -- Swift / SourceKit 用の個別設定
+  -- macOS は xcrun 経由、Linux 等はインストール済みの sourcekit-lsp を直接呼ぶ
+  local sourcekit_cmd = (vim.fn.has("mac") == 1)
+    and { "xcrun", "sourcekit-lsp" }
+    or  { "sourcekit-lsp" }
+
   vim.lsp.config("sourcekit", {
-    cmd = { "xcrun", "sourcekit-lsp" },
+    cmd = sourcekit_cmd,
     root_markers = {
       "Package.swift",
       ".git",
