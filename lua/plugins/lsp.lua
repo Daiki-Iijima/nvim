@@ -155,36 +155,41 @@ return {
   -- -------------------------------------------------------------------
   {
     "nvim-treesitter/nvim-treesitter",
-    branch = "master",      -- 旧 API (nvim-treesitter.configs) を使うため明示
+    branch = "main",
+    lazy = false,           -- FileType autocmd を確実に登録するため eager に
     build = ":TSUpdate",    -- プラグイン更新時にパーサーも自動更新
-    opts = function()
-      local ensure = {
+    config = function()
+      local parsers = {
         -- 設定ファイル系
-        "lua", "vim", "bash", "regex",
+        "lua", "vim", "vimdoc", "bash", "regex",
         -- マークアップ・スタイル
         "markdown", "markdown_inline",
         "html", "css", "scss",
-        -- データ形式
-        "json", "jsonc", "yaml", "toml",
+        -- データ形式 (jsonc は main ブランチで未サポート → json で代用)
+        "json", "yaml", "toml",
         -- Web フロントエンド
         "javascript", "typescript", "tsx",
-        -- システム言語
-        "rust",
+        -- システム/ネイティブ言語
+        "rust", "c", "cpp", "go", "c_sharp",
       }
-      -- Swift パーサーは tree-sitter CLI で生成が必要。
-      -- master ブランチは互換のある CLI が古く、新しい CLI だと
-      -- "--no-bindings" でエラーになるので macOS のみで有効化。
+      -- Swift は macOS でのみ (Linux だと tree-sitter CLI 互換性問題)
       if vim.fn.has("mac") == 1 then
-        table.insert(ensure, "swift")
+        table.insert(parsers, "swift")
       end
-      return {
-        ensure_installed = ensure,
-        highlight = { enable = true }, -- Treesitter によるハイライトを有効化
-        indent    = { enable = true }, -- Treesitter によるインデントを有効化
-      }
-    end,
-    config = function(_, opts)
-      require("nvim-treesitter.configs").setup(opts)
+
+      -- 非同期インストール (既にあれば no-op)
+      require("nvim-treesitter").install(parsers)
+
+      -- ハイライト/インデントを FileType フックで有効化
+      -- (main ブランチは「自分で treesitter.start() を呼ぶ」設計に変わった)
+      vim.api.nvim_create_autocmd("FileType", {
+        callback = function(args)
+          local bufnr = args.buf
+          if pcall(vim.treesitter.start, bufnr) then
+            vim.bo[bufnr].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+          end
+        end,
+      })
     end,
   },
 
