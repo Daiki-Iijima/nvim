@@ -155,9 +155,10 @@ return {
   -- -------------------------------------------------------------------
   {
     "nvim-treesitter/nvim-treesitter",
-    build = ":TSUpdate", -- プラグイン更新時にパーサーも自動更新
-    opts = {
-      ensure_installed = {
+    branch = "master",      -- 旧 API (nvim-treesitter.configs) を使うため明示
+    build = ":TSUpdate",    -- プラグイン更新時にパーサーも自動更新
+    opts = function()
+      local ensure = {
         -- 設定ファイル系
         "lua", "vim", "bash", "regex",
         -- マークアップ・スタイル
@@ -169,12 +170,19 @@ return {
         "javascript", "typescript", "tsx",
         -- システム言語
         "rust",
-        -- その他（Apple / 汎用）
-        "swift",
-      },
-      highlight = { enable = true }, -- Treesitter によるハイライトを有効化
-      indent    = { enable = true }, -- Treesitter によるインデントを有効化
-    },
+      }
+      -- Swift パーサーは tree-sitter CLI で生成が必要。
+      -- master ブランチは互換のある CLI が古く、新しい CLI だと
+      -- "--no-bindings" でエラーになるので macOS のみで有効化。
+      if vim.fn.has("mac") == 1 then
+        table.insert(ensure, "swift")
+      end
+      return {
+        ensure_installed = ensure,
+        highlight = { enable = true }, -- Treesitter によるハイライトを有効化
+        indent    = { enable = true }, -- Treesitter によるインデントを有効化
+      }
+    end,
     config = function(_, opts)
       require("nvim-treesitter.configs").setup(opts)
     end,
