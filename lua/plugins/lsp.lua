@@ -86,7 +86,10 @@ return {
           ["<CR>"]      = cmp.mapping.confirm({ select = false }),
           ["<C-Space>"] = cmp.mapping.complete(),
           ["<Tab>"] = function(fallback)
-            if cmp.visible() then
+            local ok_copilot, copilot = pcall(require, "copilot.suggestion")
+            if ok_copilot and copilot.is_visible() then
+              copilot.accept()
+            elseif cmp.visible() then
               cmp.select_next_item()
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump() -- スニペット内の次のプレースホルダへ
