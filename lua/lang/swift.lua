@@ -8,6 +8,7 @@ function M.setup()
 
   vim.lsp.config("sourcekit", {
     cmd = sourcekit_cmd,
+    filetypes = { "swift" },
     root_markers = {
       "Package.swift",
       ".git",
