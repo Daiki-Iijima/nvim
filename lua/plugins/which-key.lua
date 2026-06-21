@@ -21,6 +21,8 @@ return {
       { "<leader>l", group = "LSP", icon = " " },
       { "<leader>d", group = "Diagnostics / Quickfix", icon = " " },
       { "<leader>c", group = "Code / Linter", icon = "💻" },
+      { "<leader>t", group = "Trouble", icon = "🚦" },
+      { "<leader>s", group = "Search / Replace", icon = "🔁" },
     },
   },
 }
