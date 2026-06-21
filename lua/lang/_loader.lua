@@ -267,6 +267,8 @@ local function on_attach(_, bufnr)
     vim.diagnostic.setqflist({ bufnr = 0 })
     vim.cmd("copen")
   end, { desc = "現在バッファの診断エラーをQuickfixに表示" })
+end
+
 local translation_cache = {}
 
 local function translate_diagnostics(err, result, ctx, config, orig_handler)
