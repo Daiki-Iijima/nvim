@@ -57,3 +57,14 @@ vim.lsp.util.open_floating_preview = function(contents, syntax, opts, ...)
   opts.border = opts.border or "rounded"
   return orig_open_floating_preview(contents, syntax, opts, ...)
 end
+
+-- =============================================================================
+-- プロバイダーの無効化（起動速度の向上と checkhealth の警告抑制）
+-- =============================================================================
+-- Node.js, Python, Ruby, Perl 等の外部言語プロバイダーは
+-- 最近の Lua 製プラグインではほぼ不要なため、無効化して高速化します。
+vim.g.loaded_node_provider = 0
+vim.g.loaded_python3_provider = 0
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_perl_provider = 0
+

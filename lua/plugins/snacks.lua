@@ -7,6 +7,7 @@ return {
     -- ==== Snacks モジュール有効化 ====
     picker = {
       enabled = true, -- FZF / Telescope 代わり
+      ui_select = true, -- vim.ui.select を Snacks.picker.select に置き換える
       -- Explorer の picker に対してだけ list のキーを上書き
       sources = {
         explorer = {
