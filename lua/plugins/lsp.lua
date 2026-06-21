@@ -121,9 +121,6 @@ return {
 
         sorting = {
           comparators = {
-            cmp.config.compare.offset,
-            cmp.config.compare.exact,
-            cmp.config.compare.score,
             -- スニペットを候補リストの最下部に押し下げる比較関数
             function(entry1, entry2)
               local types = require("cmp.types")
@@ -136,6 +133,9 @@ return {
                 return true
               end
             end,
+            cmp.config.compare.offset,
+            cmp.config.compare.exact,
+            cmp.config.compare.score,
             cmp.config.compare.kind,
             cmp.config.compare.sort_text,
             cmp.config.compare.length,
