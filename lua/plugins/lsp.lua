@@ -83,7 +83,7 @@ return {
         },
 
         mapping = cmp.mapping.preset.insert({
-          ["<CR>"]      = cmp.mapping.confirm({ select = true }),
+          ["<CR>"]      = cmp.mapping.confirm({ select = false }),
           ["<C-Space>"] = cmp.mapping.complete(),
           ["<Tab>"] = function(fallback)
             if cmp.visible() then
@@ -118,6 +118,30 @@ return {
             { name = "path" },
           }
         ),
+
+        sorting = {
+          comparators = {
+            cmp.config.compare.offset,
+            cmp.config.compare.exact,
+            cmp.config.compare.score,
+            -- スニペットを候補リストの最下部に押し下げる比較関数
+            function(entry1, entry2)
+              local types = require("cmp.types")
+              local kind1 = entry1:get_kind()
+              local kind2 = entry2:get_kind()
+              if kind1 == types.lsp.CompletionItemKind.Snippet and kind2 ~= types.lsp.CompletionItemKind.Snippet then
+                return false
+              end
+              if kind2 == types.lsp.CompletionItemKind.Snippet and kind1 ~= types.lsp.CompletionItemKind.Snippet then
+                return true
+              end
+            end,
+            cmp.config.compare.kind,
+            cmp.config.compare.sort_text,
+            cmp.config.compare.length,
+            cmp.config.compare.order,
+          },
+        },
 
         window = {
           completion = {
