@@ -159,6 +159,11 @@ return {
     lazy = false,           -- FileType autocmd を確実に登録するため eager に
     build = ":TSUpdate",    -- プラグイン更新時にパーサーも自動更新
     config = function()
+      -- 言語のエイリアス登録 (markdown 内の ```js や ```ts などのコードブロックのハイライト用)
+      vim.treesitter.language.register("javascript", "js")
+      vim.treesitter.language.register("typescript", "ts")
+      vim.treesitter.language.register("bash", "sh")
+
       local parsers = {
         -- 設定ファイル系
         "lua", "vim", "vimdoc", "bash", "regex",
@@ -177,19 +182,48 @@ return {
         table.insert(parsers, "swift")
       end
 
+      -- tree-sitter CLI 0.25+ は --no-bindings 廃止 (デフォルト動作)。
+      -- nvim-treesitter (main) はまだ --no-bindings を渡すので、ここで除去。
+      local ok_install, install = pcall(require, "nvim-treesitter.install")
+      if ok_install then
+        install.ts_generate_args = { "generate", "--abi", tostring(vim.treesitter.language_version) }
+      end
+
       -- 非同期インストール (既にあれば no-op)
-      require("nvim-treesitter").install(parsers)
+      local ts = require("nvim-treesitter")
+      if type(ts.install) == "function" then
+        ts.install(parsers)
+      else
+        -- fallback: main ブランチ未同期 or 旧 master の場合
+        vim.schedule(function()
+          vim.cmd("TSInstall! " .. table.concat(parsers, " "))
+        end)
+      end
 
       -- ハイライト/インデントを FileType フックで有効化
       -- (main ブランチは「自分で treesitter.start() を呼ぶ」設計に変わった)
+      local function start_treesitter(bufnr)
+        if vim.bo[bufnr].filetype == "" then
+          return
+        end
+
+        if pcall(vim.treesitter.start, bufnr) then
+          vim.bo[bufnr].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end
+      end
+
       vim.api.nvim_create_autocmd("FileType", {
         callback = function(args)
-          local bufnr = args.buf
-          if pcall(vim.treesitter.start, bufnr) then
-            vim.bo[bufnr].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-          end
+          start_treesitter(args.buf)
         end,
       })
+
+      -- `nvim file.js` の初回バッファは FileType が先に発火することがある。
+      for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_loaded(bufnr) then
+          start_treesitter(bufnr)
+        end
+      end
     end,
   },
 
