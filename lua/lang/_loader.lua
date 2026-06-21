@@ -267,12 +267,93 @@ local function on_attach(_, bufnr)
     vim.diagnostic.setqflist({ bufnr = 0 })
     vim.cmd("copen")
   end, { desc = "現在バッファの診断エラーをQuickfixに表示" })
+local translation_cache = {}
+
+local function translate_diagnostics(err, result, ctx, config, orig_handler)
+  if not result or not result.diagnostics or #result.diagnostics == 0 then
+    orig_handler(err, result, ctx, config)
+    return
+  end
+
+  local to_translate = {}
+  local indices = {}
+
+  for i, d in ipairs(result.diagnostics) do
+    local msg = d.message
+    if translation_cache[msg] then
+      d.message = translation_cache[msg]
+    else
+      table.insert(to_translate, msg)
+      table.insert(indices, i)
+    end
+  end
+
+  if #to_translate == 0 then
+    orig_handler(err, result, ctx, config)
+    return
+  end
+
+  local separator = "\n___\n"
+  local combined = table.concat(to_translate, separator)
+
+  vim.system(
+    { "curl", "-s", "https://translate.googleapis.com/translate_a/single",
+      "-G", "--data-urlencode", "q=" .. combined,
+      "-d", "client=gtx&sl=auto&tl=ja&dt=t" },
+    { text = true },
+    function(res)
+      if res.code ~= 0 or not res.stdout or res.stdout == "" then
+        vim.schedule(function()
+          orig_handler(err, result, ctx, config)
+        end)
+        return
+      end
+
+      local ok, decoded = pcall(vim.json.decode, res.stdout)
+      if not ok or type(decoded) ~= "table" or not decoded[1] then
+        vim.schedule(function()
+          orig_handler(err, result, ctx, config)
+        end)
+        return
+      end
+
+      local translated_parts = {}
+      for _, segment in ipairs(decoded[1]) do
+        if type(segment) == "table" and type(segment[1]) == "string" then
+          table.insert(translated_parts, segment[1])
+        end
+      end
+      local translated_text = table.concat(translated_parts, "")
+
+      -- スペース調整と分割
+      local normalized = translated_text:gsub("%s*___%s*", "___")
+      local translated_messages = vim.split(normalized, "___", { plain = true })
+
+      vim.schedule(function()
+        for idx, i in ipairs(indices) do
+          local orig_msg = to_translate[idx]
+          local trans_msg = translated_messages[idx] or orig_msg
+          trans_msg = trans_msg:gsub("^%s*(.-)%s*$", "%1")
+          translation_cache[orig_msg] = trans_msg
+          result.diagnostics[i].message = trans_msg
+        end
+        orig_handler(err, result, ctx, config)
+      end)
+    end
+  )
 end
 
 M.on_attach = on_attach
 
 function M.setup()
   local capabilities = make_capabilities()
+
+  -- publishDiagnostics ハンドラーをフックして診断を自動日本語翻訳
+  local orig_publish = vim.lsp.handlers["textDocument/publishDiagnostics"]
+  vim.lsp.handlers["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
+    translate_diagnostics(err, result, ctx, config, orig_publish)
+  end
+
 
   -- すべての LSP に共通で適用する設定
   ---@type vim.lsp.Config
