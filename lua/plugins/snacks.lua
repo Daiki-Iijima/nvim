@@ -57,6 +57,12 @@ return {
       enabled = true,
       replace_netrw = true, -- nvim . で自動起動したいなら
     },
+
+    -- ==== 追加の便利モジュール ====
+    bigfile = { enabled = true },   -- 超巨大ファイルを開いた時の動作軽量化
+    scroll = { enabled = true },    -- 物理アニメーションによるヌルヌルスクロール
+    words = { enabled = true },     -- 同一単語（変数など）の自動ハイライトと [[ / ]] での移動
+    dashboard = { enabled = true }, -- Neovim 起動時の美麗ダッシュボード
   },
 
   config = function(_, opts)
@@ -96,5 +102,12 @@ return {
     map({ "n", "t" }, "<C-/>", function()
       Snacks.terminal()
     end, { desc = "ターミナルを開閉" })
+
+    -- ===== Toggles (on/off) =====
+    Snacks.toggle.option("spell", { name = "スペルチェック" }):map("<leader>us")
+    Snacks.toggle.option("wrap", { name = "行の折り返し" }):map("<leader>uw")
+    Snacks.toggle.option("relativenumber", { name = "相対行番号" }):map("<leader>uL")
+    Snacks.toggle.diagnostics():map("<leader>ud")
+    Snacks.toggle.inlay_hints():map("<leader>uh")
   end,
 }

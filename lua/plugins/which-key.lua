@@ -23,6 +23,7 @@ return {
       { "<leader>c", group = "Code / Linter", icon = "💻" },
       { "<leader>t", group = "Trouble", icon = "🚦" },
       { "<leader>s", group = "Search / Replace", icon = "🔁" },
+      { "<leader>u", group = "Toggle / UI Options", icon = "⚙️" },
     },
   },
 }
