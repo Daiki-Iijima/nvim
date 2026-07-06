@@ -17,6 +17,8 @@ return {
         cs         = "dotnet run",
         rust       = "cargo run",
         php        = "php",
+        javascript = "node",
+        typescript = "npx tsx",
       },
     })
 

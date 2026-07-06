@@ -9,15 +9,16 @@
 local map  = vim.keymap.set
 local opts = { noremap = true, silent = true }
 
--- Leader キー（スペース）
--- <leader>xxx 形式のキーマップはすべてこのキーを起点にする
+-- Leader / Local Leader キー
+-- <leader>xxx 形式はスペース、<localleader>xxx 形式はカンマを起点にする
 vim.g.mapleader = " "
+vim.g.maplocalleader = ","
 
 -----------------------------------------------------
 -- ファイル操作
 -----------------------------------------------------
 map("n", "<leader>w", ":w<CR>",  opts) -- 上書き保存
-map("n", "<leader>x", ":wq<CR>", opts) -- 保存して終了（注: code_runner の <leader>x と競合注意）
+map("n", "<leader>wq", ":wq<CR>", opts) -- 保存して終了
 map("n", "<leader>q", ":q<CR>",  opts) -- 終了（未保存の変更があれば警告）
 map("n", "<leader>Q", ":q!<CR>", opts) -- 強制終了（未保存の変更を破棄）
 
@@ -45,7 +46,6 @@ map("n", "<C-Right>", ":vertical resize +2<CR>",  opts) -- 幅を広げる
 map({ "n", "x" }, "d", '"_d',  opts)
 map({ "n", "x" }, "D", '"_D',  opts)
 map("n",          "x", '"_x',  opts) -- 1 文字削除もヤンクしない
-map("x",          "p", '"_dP', opts) -- ビジュアル貼り付けで元のヤンクを保持
 
 -----------------------------------------------------
 -- 移動を画面行ベースに変更
@@ -71,3 +71,10 @@ map("n", "<S-l>", "$", opts) -- ノーマル: 行末
 -----------------------------------------------------
 map("i", "jj",  "<Esc>", opts) -- ホームポジションのまま Esc できる
 map("i", "<C-c>", "<Esc>", opts) -- Ctrl+C でも Esc 相当に（デフォルトと同動作）
+
+-----------------------------------------------------
+-- コメントアウト (Neovim 0.10+ 内蔵機能)
+-----------------------------------------------------
+-- Ctrl + / (ターミナル上は <C-_> として入力される) でコメントをトグル (VSCode風)
+map("n", "<C-_>", "gcc", { remap = true, silent = true, desc = "コメントアウトをトグル" })
+map("v", "<C-_>", "gc",  { remap = true, silent = true, desc = "コメントアウトをトグル" })

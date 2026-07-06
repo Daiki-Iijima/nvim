@@ -18,7 +18,7 @@
 
 return {
   "MeanderingProgrammer/render-markdown.nvim",
-  ft = { "markdown" }, -- Markdown ファイルを開いたときだけ読み込む
+  ft = { "markdown", "codecompanion" }, -- Markdown/CodeCompanion を開いたときだけ読み込む
   dependencies = {
     "nvim-treesitter/nvim-treesitter",
     "nvim-tree/nvim-web-devicons",
@@ -26,7 +26,7 @@ return {
   opts = {
     heading = {
       -- 見出しレベル（H1〜H6）ごとのアイコン
-      icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
+      icons = { "┃ ", "┃ ", "┃ ", "┃ ", "┃ ", "┃ " },
     },
     code = {
       enabled = true,    -- コードブロックの装飾を有効化

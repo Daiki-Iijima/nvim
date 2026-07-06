@@ -24,6 +24,8 @@ return {
       { "<leader>t", group = "Trouble", icon = "🚦" },
       { "<leader>s", group = "Search / Replace", icon = "🔁" },
       { "<leader>u", group = "Toggle / UI Options", icon = "⚙️" },
+      { "<leader>n", group = "Node / package.json", icon = "📦" },
+      { "<leader>a", group = "AI (CodeCompanion)", icon = "🤖" },
     },
   },
 }

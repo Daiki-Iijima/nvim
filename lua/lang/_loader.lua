@@ -1,11 +1,16 @@
 local M = {}
 
--- 共通 capabilities（nvim-cmp 連携用）
+-- 共通 capabilities（blink.cmp または nvim-cmp 連携用）
 local function make_capabilities()
   local capabilities = vim.lsp.protocol.make_client_capabilities()
-  local ok_cmp, cmp_lsp = pcall(require, "cmp_nvim_lsp")
-  if ok_cmp then
-    capabilities = cmp_lsp.default_capabilities(capabilities)
+  local ok_blink, blink = pcall(require, "blink.cmp")
+  if ok_blink then
+    capabilities = blink.get_lsp_capabilities(capabilities)
+  else
+    local ok_cmp, cmp_lsp = pcall(require, "cmp_nvim_lsp")
+    if ok_cmp then
+      capabilities = cmp_lsp.default_capabilities(capabilities)
+    end
   end
   return capabilities
 end

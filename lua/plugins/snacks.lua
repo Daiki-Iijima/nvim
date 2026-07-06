@@ -22,6 +22,65 @@ return {
         },
         keymaps = {
           layout = { preview = false }, -- キーマップ一覧はプレビュー不要
+          transform = function(item, ctx)
+            local translations = {
+              -- nvim-surround
+              ["Change a surrounding pair"] = "囲み(surround)を変更する",
+              ["Delete a surrounding pair"] = "囲み(surround)を削除する",
+              ["Add a surrounding pair around a motion (normal mode)"] = "モーションの周囲に囲み(surround)を追加 (ノーマルモード)",
+              ["Add a surrounding pair around the cursor (insert mode)"] = "カーソルの周囲に囲み(surround)を追加 (インサートモード)",
+              ["Change a surrounding pair, putting replacements on new lines"] = "囲み(surround)を変更し、改行して配置する",
+              ["Add a surrounding pair around the current line (normal mode)"] = "現在の行の周囲に囲み(surround)を追加 (ノーマルモード)",
+              ["Add a surrounding pair around a visual selection, on new lines"] = "ビジュアル選択範囲を改行して囲み(surround)を追加",
+              ["Add a surrounding pair around a motion, on new lines (normal mode)"] = "モーションの周囲に改行して囲み(surround)を追加 (ノーマルモード)",
+              ["Add a surrounding pair around the cursor, on new lines (insert mode)"] = "カーソルの周囲に改行して囲み(surround)を追加 (インサートモード)",
+              ["Add a surrounding pair around the current line, on new lines (normal mode)"] = "現在の行の周囲に改行して囲み(surround)を追加 (ノーマルモード)",
+              ["Add a surrounding pair around a visual selection"] = "ビジュアル選択範囲を囲む(surround)",
+
+              -- flash.nvim
+              ["Flash Jump"] = "Flashジャンプ (高速移動)",
+              ["Treesitter Search"] = "Treesitter検索 (構文選択)",
+              ["Toggle Flash Search"] = "Flash検索トグル",
+            }
+
+            local desc = item.item.desc
+            if desc and desc ~= "" then
+              local trans = translations[desc]
+              if not trans then
+                -- Fallback translation patterns for surrounding keymaps
+                if desc:lower():find("surround") then
+                  trans = desc
+                  trans = trans:gsub("[Cc]hange a surrounding pair", "囲み(surround)を変更")
+                  trans = trans:gsub("[Dd]elete a surrounding pair", "囲み(surround)を削除")
+                  trans = trans:gsub("[Aa]dd a surrounding pair", "囲み(surround)を追加")
+                  trans = trans:gsub("around a motion", "モーションの周囲に")
+                  trans = trans:gsub("around the cursor", "カーソルの周囲に")
+                  trans = trans:gsub("around the current line", "現在の行の周囲に")
+                  trans = trans:gsub("around a visual selection", "ビジュアル選択範囲の周囲に")
+                  trans = trans:gsub("on new lines", "改行して")
+                  trans = trans:gsub("normal mode", "ノーマル")
+                  trans = trans:gsub("insert mode", "挿入")
+                  trans = trans:gsub("putting replacements", "置き換えて")
+                  if not trans:find("囲") then
+                    trans = trans .. " [囲む/surround]"
+                  end
+                end
+              end
+
+              if trans then
+                item.item.desc = trans
+                -- Update item.text so matching works on the translation and keywords
+                item.text = item.text .. " " .. trans .. " 囲む surround"
+              end
+            else
+              -- If no desc, check if RHS contains surround or similar to add keywords
+              local rhs = item.item.rhs or ""
+              if rhs:lower():find("surround") or item.item.lhs:lower():find("surround") then
+                item.text = item.text .. " 囲む surround"
+              end
+            end
+            return item
+          end,
         },
       },
     },
@@ -31,7 +90,7 @@ return {
       ft = "markdown",
     },
     input = { enabled = true },     -- LSP rename の入力 UI がキレイになる
-    indent = { enabled = true },    -- インデント可視化（hlchunk の代わり候補）
+    indent = { enabled = true, char = "│" },    -- インデント可視化
     notifier = { enabled = true },  -- 通知 UI
     quickfile = { enabled = true }, -- `nvim file` が速くなる
     lazygit = { enabled = true },   -- lazygit フロート

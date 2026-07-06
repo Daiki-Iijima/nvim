@@ -1,13 +1,50 @@
--- =============================================================================
--- LSP・補完・シンタックス・フォーマット の統合設定
--- =============================================================================
--- このファイルで管理するプラグイン:
---   nvim-lspconfig  → LSP クライアントの起動管理
---   nvim-cmp        → 補完エンジン（補完ウィンドウの表示・選択）
---   LuaSnip         → スニペットエンジン
---   nvim-treesitter → シンタックスハイライト・インデント
---   conform.nvim    → ファイル保存時の自動フォーマット
--- =============================================================================
+-- スニペットの動的変数（LSP変数）を解決するヘルパー関数
+local function get_snippet_var_value(var_name)
+  if var_name == "CURRENT_YEAR" then return os.date("%Y")
+  elseif var_name == "CURRENT_YEAR_SHORT" then return os.date("%y")
+  elseif var_name == "CURRENT_MONTH" then return os.date("%m")
+  elseif var_name == "CURRENT_MONTH_NAME" then return os.date("%B")
+  elseif var_name == "CURRENT_MONTH_NAME_SHORT" then return os.date("%b")
+  elseif var_name == "CURRENT_DATE" then return os.date("%d")
+  elseif var_name == "CURRENT_DAY_NAME" then return os.date("%A")
+  elseif var_name == "CURRENT_DAY_NAME_SHORT" then return os.date("%a")
+  elseif var_name == "CURRENT_HOUR" then return os.date("%H")
+  elseif var_name == "CURRENT_MINUTE" then return os.date("%M")
+  elseif var_name == "CURRENT_SECOND" then return os.date("%S")
+  elseif var_name == "CURRENT_SECONDS_UNIX" then return tostring(os.time())
+  elseif var_name == "TM_FILENAME" then return vim.fn.expand("%:t")
+  elseif var_name == "TM_FILENAME_BASE" then return vim.fn.expand("%:t:r")
+  elseif var_name == "TM_DIRECTORY" then return vim.fn.expand("%:p:h:t")
+  elseif var_name == "TM_FILEPATH" then return vim.fn.expand("%:p")
+  elseif var_name == "CLIPBOARD" then
+    local clip = vim.fn.getreg("+")
+    if not clip or clip == "" then clip = vim.fn.getreg('"') end
+    return clip or ""
+  end
+  return nil
+end
+
+local function resolve_snippet_vars(text)
+  if not text or type(text) ~= "string" then return text end
+
+  -- ${VAR_NAME} または ${VAR_NAME:default} を置換
+  text = text:gsub("%%${([%%w_]+)([^}]*)}", function(var_name, suffix)
+    local val = get_snippet_var_value(var_name)
+    if val then
+      return val
+    elseif suffix:sub(1, 1) == ":" then
+      return suffix:sub(2) -- デフォルト値を返す
+    end
+    return nil -- 置換しない
+  end)
+
+  -- $VAR_NAME を置換 (ただし $1 や $0 などのタブストップは除外するために英字またはアンダースコア開始に限定)
+  text = text:gsub("%%$([a-zA-Z_][%%w_]*)", function(var_name)
+    return get_snippet_var_value(var_name)
+  end)
+
+  return text
+end
 
 return {
 
@@ -27,144 +64,125 @@ return {
   },
 
   --------------------------------------------------------------------
-  -- nvim-cmp: 補完エンジン
+  -- blink.cmp: 超高速な Rust 製補完エンジン
   -- -------------------------------------------------------------------
   -- 入力中に候補をポップアップ表示する補完フレームワーク。
-  -- 複数の「補完ソース」からデータを集約して表示する。
-  --
-  -- 補完ソース（sources）の優先順:
+  -- Rust でビルドされており、非常に高速に動作する。
+  -- 
+  -- 補完ソースの優先度設定:
   --   1. lazydev   → Neovim API（Lua 編集時のみ最優先）
-  --   2. nvim_lsp  → LSP サーバーからの補完（最も重要）
-  --   3. luasnip   → スニペット展開
-  --   4. buffer    → 現在開いているバッファ内の単語（3 文字以上で起動）
-  --   5. path      → ファイルシステムのパス補完
-  --
-  -- キーマップ:
-  --   Enter      → 候補を確定
-  --   Ctrl+Space → 補完を手動で起動
-  --   Tab        → 次の候補 / スニペットの次のプレースホルダへ
-  --   Shift+Tab  → 前の候補 / スニペットの前のプレースホルダへ
+  --   2. lsp       → LSP サーバーからの補完
+  --   3. path      → ファイルシステムのパス補完
+  --   4. snippets  → スニペット候補 (friendly-snippets)
+  --   5. buffer    → 開いているバッファ内の単語
   -- -------------------------------------------------------------------
   {
-    "hrsh7th/nvim-cmp",
-    event = "InsertEnter", -- 挿入モードに入ったときだけ読み込む
+    "saghen/blink.cmp",
+    version = "1.*", -- 安定ビルド済みのバイナリをダウンロード
+    -- 挿入モードだけでなく、コマンドラインに入ったタイミングでも起動するように拡張
+    event = { "InsertEnter", "CmdlineEnter" },
     dependencies = {
-      "hrsh7th/cmp-nvim-lsp",  -- LSP からの補完候補を nvim-cmp に渡す接続層
-      "hrsh7th/cmp-buffer",    -- 開いているバッファ内の単語を補完候補にする
-      "hrsh7th/cmp-path",      -- ファイルパスを補完候補にする
-      {
-        "L3MON4D3/LuaSnip",    -- スニペットエンジン本体
-        dependencies = {
-          -- friendly-snippets: VS Code 互換のスニペット集
-          -- HTML / CSS / JS / TS / Rust / Python など主要言語のスニペットが入る
-          "rafamadriz/friendly-snippets",
-        },
-        config = function()
-          -- VS Code 形式のスニペットを LuaSnip に読み込む
-          require("luasnip.loaders.from_vscode").lazy_load()
-        end,
-      },
-      "saadparwaiz1/cmp_luasnip", -- LuaSnip のスニペットを nvim-cmp に渡す接続層
-      "onsails/lspkind.nvim",     -- 補完候補に種別アイコンを付ける（lspkind.lua 参照）
+      "rafamadriz/friendly-snippets", -- スニペット集（既存のものを流用）
+      "L3MON4D3/LuaSnip",
     },
-    config = function()
-      local cmp     = require("cmp")
-      local luasnip = require("luasnip")
-      local lspkind = require("lspkind")
+    opts = {
+      -- キーマップ設定
+      -- preset = "enter" で Enterでの確定を有効にしつつ、
+      -- Tab/S-Tab で補完選択およびスニペットのジャンプ（プレースホルダ移動）ができるようにします。
+      keymap = {
+        preset = "enter",
+        ["<CR>"] = { "fallback" },
+        ["<Tab>"] = { "select_and_accept", "snippet_forward", "fallback" },
+        ["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
+      },
 
-      vim.o.pumheight = 10 -- 補完ポップアップの最大表示行数
+      -- nvim-cmp のハイライトグループをフォールバックとして使用
+      appearance = {
+        use_nvim_cmp_as_default = true,
+        nerd_font_variant = "mono",
+      },
 
-      cmp.setup({
-        -- スニペットの展開を LuaSnip に委ねる
-        snippet = {
-          expand = function(args)
-            luasnip.lsp_expand(args.body)
-          end,
+      -- 引数ガイド（シグネチャヘルプ）を有効化
+      signature = { enabled = true },
+      -- スニペットエンジンとして LuaSnip を指定（デフォルトの vim.snippet は補完確定時にセッションが切れやすいため）
+      snippets = { preset = "luasnip" },
+
+      -- コマンドライン補完を有効化
+      cmdline = {
+        enabled = true,
+        keymap = { preset = "cmdline" },
+        sources = { "cmdline", "buffer" },
+      },
+
+      completion = {
+        -- 補完ウィンドウのドキュメントを自動表示
+        documentation = {
+          auto_show = true,
+          window = { border = "rounded" },
         },
-
-        mapping = cmp.mapping.preset.insert({
-          ["<CR>"]      = cmp.mapping.confirm({ select = false }),
-          ["<C-Space>"] = cmp.mapping.complete(),
-          ["<Tab>"] = function(fallback)
-            if cmp.visible() then
-              cmp.select_next_item()
-            elseif luasnip.expand_or_jumpable() then
-              luasnip.expand_or_jump() -- スニペット内の次のプレースホルダへ
-            else
-              fallback()
-            end
-          end,
-          ["<S-Tab>"] = function(fallback)
-            if cmp.visible() then
-              cmp.select_prev_item()
-            elseif luasnip.jumpable(-1) then
-              luasnip.jump(-1) -- スニペット内の前のプレースホルダへ
-            else
-              fallback()
-            end
-          end,
-        }),
-
-        -- sources をグループ化すると、グループ 1 に候補がある場合グループ 2 は非表示になる
-        -- → LSP・スニペット候補がある間は buffer・path が邪魔にならない
-        sources = cmp.config.sources(
-          {
-            { name = "lazydev", group_index = 0 }, -- Lua 編集時に最優先（index = 0 が最高）
-            { name = "nvim_lsp" },
-            { name = "luasnip" },
+        -- 補完ポップアップの表示項目（左に候補名、右にアイコン）
+        menu = {
+          draw = {
+            columns = { { "label", "label_description", gap = 1 }, { "kind" } },
           },
-          {
-            { name = "buffer", keyword_length = 3 }, -- 3 文字以上入力したら起動
-            { name = "path" },
-          }
-        ),
+        },
+        -- 選択中の補完候補をバッファ上にゴーストテキストとしてプレビュー表示
+        ghost_text = {
+          enabled = true,
+        },
+      },
 
-        sorting = {
-          comparators = {
-            -- スニペットを候補リストの最下部に押し下げる比較関数
-            function(entry1, entry2)
-              local types = require("cmp.types")
-              local kind1 = entry1:get_kind()
-              local kind2 = entry2:get_kind()
-              if kind1 == types.lsp.CompletionItemKind.Snippet and kind2 ~= types.lsp.CompletionItemKind.Snippet then
-                return false
+      -- 補完ソースの設定
+      sources = {
+        default = { "lazydev", "lsp", "path", "snippets", "buffer", "codecompanion" },
+        providers = {
+          lazydev = {
+            name = "LazyDev",
+            module = "lazydev.integrations.blink",
+            score_offset = 100, -- Neovim APIの補完を最優先
+          },
+          codecompanion = {
+            name = "CodeCompanion",
+            module = "codecompanion.providers.completion.blink",
+            enabled = true,
+          },
+          snippets = {
+            score_offset = -3,  -- スニペットをリストの下部に押し下げる（既存のソート設定の再現）
+            transform_items = function(ctx, items)
+              for _, item in ipairs(items) do
+                local label = item.label
+                local date_str = nil
+                if label == "date" or item.insertText == "date" then
+                  date_str = os.date("%Y-%m-%d")
+                elseif label == "time" or item.insertText == "time" then
+                  date_str = os.date("%H:%M:%S")
+                elseif label == "datetime" or item.insertText == "datetime" then
+                  date_str = os.date("%Y-%m-%d %H:%M:%S")
+                end
+
+                if date_str then
+                  item.insertText = date_str
+                  if item.textEdit then item.textEdit.newText = date_str end
+                else
+                  -- それ以外のスニペットに存在するLSP変数（$CURRENT_YEARなど）を動的に解決
+                  if item.insertText then
+                    item.insertText = resolve_snippet_vars(item.insertText)
+                  end
+                  if item.textEdit and item.textEdit.newText then
+                    item.textEdit.newText = resolve_snippet_vars(item.textEdit.newText)
+                  end
+                end
               end
-              if kind2 == types.lsp.CompletionItemKind.Snippet and kind1 ~= types.lsp.CompletionItemKind.Snippet then
-                return true
-              end
+              return items
             end,
-            cmp.config.compare.offset,
-            cmp.config.compare.exact,
-            cmp.config.compare.score,
-            cmp.config.compare.kind,
-            cmp.config.compare.sort_text,
-            cmp.config.compare.length,
-            cmp.config.compare.order,
+          },
+          buffer = {
+            score_offset = -5,  -- バッファ内単語はさらに下に
           },
         },
-
-        window = {
-          completion = {
-            winhighlight = "Normal:Pmenu,CursorLine:PmenuSel,Search:None",
-            max_height = 10,
-          },
-          documentation = cmp.config.window.bordered({
-            max_width  = 60,
-            max_height = 15,
-            winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,Search:None",
-          }),
-        },
-
-        formatting = {
-          fields = { "abbr", "kind" }, -- 表示カラム: 補完名 → 種別アイコン
-          format = lspkind.cmp_format({
-            mode         = "symbol", -- アイコンのみ表示（"symbol_text" にすると文字も出る）
-            maxwidth     = 40,
-            ellipsis_char = "…",
-          }),
-        },
-      })
-    end,
+      },
+    },
+    opts_extend = { "sources.default" },
   },
 
   --------------------------------------------------------------------
@@ -187,6 +205,7 @@ return {
       vim.treesitter.language.register("javascript", "js")
       vim.treesitter.language.register("typescript", "ts")
       vim.treesitter.language.register("bash", "sh")
+      vim.treesitter.language.register("html", "ejs")
 
       local parsers = {
         -- 設定ファイル系
@@ -255,17 +274,7 @@ return {
   -- conform.nvim: 保存時の自動フォーマット
   -- -------------------------------------------------------------------
   -- ファイル保存時に自動でフォーマッタを実行する。
-  -- 言語ごとのフォーマッタ設定は lua/lang/ 以下の各ファイルで登録する:
-  --   lang/lua.lua        → stylua
-  --   lang/swift.lua      → swiftformat
-  --   lang/python.lua     → black
-  --   lang/go.lua         → goimports
-  --   lang/php.lua        → pint
-  --   lang/typescript.lua → prettier（JS / TS）
-  --   lang/web.lua        → prettier（HTML / CSS / SCSS / JSON / YAML）
-  --
-  -- lsp_format = "fallback":
-  --   conform が対応フォーマッタを見つけられなかった場合に LSP のフォーマットを使う
+  -- コミットや保存のタイミングでコードフォーマットを実行。
   -- -------------------------------------------------------------------
   {
     "stevearc/conform.nvim",
@@ -276,6 +285,42 @@ return {
         lsp_format = "fallback", -- conform で対応外の場合は LSP フォーマットにフォールバック
       },
       formatters_by_ft = {}, -- 各 lang/*.lua の setup() で動的に追加される
+      formatters = {
+        prettier = {
+          -- プロジェクトに設定ファイル（.prettierrc等）がない場合のデフォルトを4スペースにする
+          prepend_args = { "--tab-width", "4" },
+        },
+      },
     },
+  },
+
+  --------------------------------------------------------------------
+  -- LuaSnip: 高機能スニペットエンジン
+  -- -------------------------------------------------------------------
+  -- Neovim 組み込みの vim.snippet は補完確定時にセッションが切れやすいため、
+  -- より堅牢な LuaSnip をスニペットエンジンとして使用します。
+  -- -------------------------------------------------------------------
+  {
+    "L3MON4D3/LuaSnip",
+    version = "v2.*",
+    build = "make install_jsregexp",
+    dependencies = { "rafamadriz/friendly-snippets" },
+    config = function()
+      local ls = require("luasnip")
+      -- VS Code 形式のスニペットを LuaSnip に読み込む
+      require("luasnip.loaders.from_vscode").lazy_load()
+
+      -- インサートモードを抜けた（Escキーなどを押した）時にスニペットのセッションを切断する
+      vim.api.nvim_create_autocmd("InsertLeave", {
+        callback = function()
+          if
+            ls.session.current_nodes[vim.api.nvim_get_current_buf()]
+            and not ls.session.jump_active
+          then
+            ls.unlink_current()
+          end
+        end,
+      })
+    end,
   },
 }

@@ -18,9 +18,9 @@ return {
     { "gp", "<Plug>(YankyGPutAfter)", mode = { "n", "x" }, desc = "ペースト（カーソルを末尾へ）" },
     { "gP", "<Plug>(YankyGPutBefore)", mode = { "n", "x" }, desc = "ペースト（カーソルを末尾へ・前）" },
 
-    -- ペースト直後に履歴を前後に切り替える（通常のキーマップを邪魔しません）
-    { "<C-p>", "<Plug>(YankyCycleForward)", desc = "ヤンク履歴を前に戻す" },
-    { "<C-n>", "<Plug>(YankyCycleBackward)", desc = "ヤンク履歴を先に進める" },
+    -- ペースト直後に履歴を前後に切り替える（<C-n> / <C-p> の競合を避けるため [y / ]y に変更）
+    { "[y", "<Plug>(YankyCycleForward)", desc = "ヤンク履歴を前に戻す" },
+    { "]y", "<Plug>(YankyCycleBackward)", desc = "ヤンク履歴を先に進める" },
 
     -- snacks.picker でヤンク履歴を一覧検索する
     { "<leader>fy", "<cmd>YankyRingHistory<cr>", desc = "ヤンク履歴を検索" },

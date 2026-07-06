@@ -11,12 +11,15 @@ vim.opt.clipboard = "unnamedplus" -- OS のクリップボードと共有（yank
 
 -- インデント
 vim.opt.expandtab   = true -- Tab キーでスペースを挿入（タブ文字を使わない）
-vim.opt.shiftwidth  = 2    -- >> や自動インデントで使うスペース数
-vim.opt.tabstop     = 2    -- タブ文字を表示するときの幅
-vim.opt.softtabstop = 2    -- Tab / Backspace キーで動く幅
+vim.opt.shiftwidth  = 4    -- >> や自動インデントで使うスペース数
+vim.opt.tabstop     = 4    -- タブ文字を表示するときの幅
+vim.opt.softtabstop = 4    -- Tab / Backspace キーで動く幅
 
 -- サインカラム（行番号の左にある余白）
 vim.opt.signcolumn = "yes:2" -- 常に 2 列分確保（git サイン + 診断アイコンが重ならない）
+
+-- マークダウンなどの記号を隠して綺麗に表示（render-markdown.nvim に必須）
+vim.opt.conceallevel = 2
 
 -- 折りたたみ
 vim.opt.foldmethod = "indent" -- インデントの深さをもとに折りたたみ範囲を決める
@@ -53,8 +56,11 @@ vim.diagnostic.config({
 local orig_open_floating_preview = vim.lsp.util.open_floating_preview
 ---@diagnostic disable-next-line: duplicate-set-field
 vim.lsp.util.open_floating_preview = function(contents, syntax, opts, ...)
-  opts        = opts or {}
-  opts.border = opts.border or "rounded"
+  opts            = opts or {}
+  opts.border     = opts.border or "rounded"
+  opts.max_width  = opts.max_width or 80   -- 幅を 80 桁で打ち切る
+  opts.max_height = opts.max_height or 25   -- 高さの上限
+  if opts.wrap == nil then opts.wrap = true end -- 長い行を折り返す
   return orig_open_floating_preview(contents, syntax, opts, ...)
 end
 
@@ -67,4 +73,13 @@ vim.g.loaded_node_provider = 0
 vim.g.loaded_python3_provider = 0
 vim.g.loaded_ruby_provider = 0
 vim.g.loaded_perl_provider = 0
+
+-- =============================================================================
+-- ファイルタイプ設定
+-- =============================================================================
+vim.filetype.add({
+  extension = {
+    ejs = "ejs",
+  },
+})
 

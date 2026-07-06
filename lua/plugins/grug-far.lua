@@ -9,7 +9,10 @@ return {
   "MagicDuck/grug-far.nvim",
   cmd = "GrugFar",
   opts = {
-    -- デフォルト設定で動作します
+    keymaps = {
+      replace = { n = "<leader>r", i = "<C-Enter>" },
+      syncLocations = { n = "<leader>s", i = "<C-s>" },
+    },
   },
   keys = {
     {

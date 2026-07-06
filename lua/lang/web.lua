@@ -21,7 +21,7 @@ function M.setup()
   -- -------------------------------------------------------------------
   vim.lsp.config("html", {
     cmd        = { "vscode-html-language-server", "--stdio" },
-    filetypes  = { "html", "htmldjango" },
+    filetypes  = { "html", "htmldjango", "ejs" },
     root_markers = { "package.json", ".git" },
     init_options = {
       provideFormatter = false, -- フォーマットは prettier（conform.nvim）に委ねる
@@ -62,6 +62,7 @@ function M.setup()
       "html", "css", "scss", "less",
       "javascript", "javascriptreact",
       "typescript", "typescriptreact",
+      "ejs",
     },
     root_markers = {
       "tailwind.config.js", "tailwind.config.ts",
@@ -94,6 +95,7 @@ function M.setup()
       "html", "css", "scss", "less",
       "javascript", "javascriptreact",
       "typescript", "typescriptreact",
+      "ejs",
     },
     root_markers = { "package.json", ".git" },
     init_options = {
@@ -157,6 +159,7 @@ function M.setup()
   if ok then
     local ft = conform.formatters_by_ft or {}
     ft.html  = { "prettier" }
+    ft.ejs   = { "prettier" }
     ft.css   = { "prettier" }
     ft.scss  = { "prettier" }
     ft.less  = { "prettier" }
