@@ -16,7 +16,7 @@ return {
         auto_trigger = true,
         debounce = 75,
         keymap = {
-          accept = "<Right>", -- 右矢印キーで提案を確定
+          accept = "<C-CR>", -- Ctrl + Enter で提案を確定
           next = "<M-]>",   -- Alt + ] で次の候補を表示
           prev = "<M-[>",   -- Alt + [ で前の候補を表示
           dismiss = "<C-]>", -- Ctrl + ] で提案を非表示にする
