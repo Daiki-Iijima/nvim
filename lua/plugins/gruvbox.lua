@@ -42,6 +42,11 @@ return {
       -- snacks.nvim のインデントガイドのハイライトを上書き設定
       vim.api.nvim_set_hl(0, "SnacksIndent", { fg = "#504945", nocombine = true })      -- 通常のインデント線（暗めの灰色）
       vim.api.nvim_set_hl(0, "SnacksIndentScope", { fg = "#fe8019", nocombine = true }) -- アクティブスコープのインデント線（オレンジ）
+
+      -- snacks.words / LSP documentHighlight の同一単語ハイライトを見やすくする
+      vim.api.nvim_set_hl(0, "LspReferenceText", { bg = "#504945", nocombine = true })
+      vim.api.nvim_set_hl(0, "LspReferenceRead", { bg = "#504945", nocombine = true })
+      vim.api.nvim_set_hl(0, "LspReferenceWrite", { bg = "#665c54", bold = true, nocombine = true })
     end,
   },
 }

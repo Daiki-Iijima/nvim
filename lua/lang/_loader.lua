@@ -67,6 +67,57 @@ local function unmask_code(text, blocks)
 end
 
 -- ホバー内容を日本語に翻訳してフロート表示
+local translation_cache = {}
+
+local function translate_text(text, cb)
+  if not text or text == "" then
+    cb(text)
+    return
+  end
+
+  if translation_cache[text] then
+    cb(translation_cache[text])
+    return
+  end
+
+  local masked_text, code_blocks = mask_code(text)
+
+  vim.system(
+    { "curl", "-s", "https://translate.googleapis.com/translate_a/single",
+      "-G", "--data-urlencode", "q=" .. masked_text,
+      "-d", "client=gtx&sl=auto&tl=ja&dt=t" },
+    { text = true },
+    function(res)
+      if res.code ~= 0 or not res.stdout or res.stdout == "" then
+        vim.schedule(function() cb(text) end)
+        return
+      end
+
+      local ok, data = pcall(vim.json.decode, res.stdout)
+      if not ok or type(data) ~= "table" or not data[1] then
+        vim.schedule(function() cb(text) end)
+        return
+      end
+
+      local translated_parts = {}
+      for _, segment in ipairs(data[1]) do
+        if type(segment) == "table" and type(segment[1]) == "string" then
+          table.insert(translated_parts, segment[1])
+        end
+      end
+      local translated = table.concat(translated_parts, "")
+
+      if translated ~= "" then
+        translated = unmask_code(translated, code_blocks)
+        translation_cache[text] = translated
+        vim.schedule(function() cb(translated) end)
+      else
+        vim.schedule(function() cb(text) end)
+      end
+    end
+  )
+end
+
 local function translated_hover(bufnr)
   local client = vim.lsp.get_clients({ bufnr = bufnr })[1]
   local encoding = client and client.offset_encoding or "utf-16"
@@ -93,52 +144,14 @@ local function translated_hover(bufnr)
 
     if text == "" then return end
 
-    -- コードブロックを退避してから翻訳
-    local masked_text, code_blocks = mask_code(text)
-
-    -- Google Translate（無料エンドポイント）で日本語に翻訳
-    vim.system(
-      { "curl", "-s", "https://translate.googleapis.com/translate_a/single",
-        "-G", "--data-urlencode", "q=" .. masked_text,
-        "-d", "client=gtx&sl=auto&tl=ja&dt=t" },
-      { text = true },
-      function(res)
-        if res.code ~= 0 or not res.stdout or res.stdout == "" then
-          vim.schedule(function() vim.lsp.buf.hover() end)
-          return
-        end
-
-        local ok, data = pcall(vim.json.decode, res.stdout)
-        if not ok or type(data) ~= "table" or not data[1] then
-          vim.schedule(function() vim.lsp.buf.hover() end)
-          return
-        end
-
-        local translated_parts = {}
-        for _, segment in ipairs(data[1]) do
-          if type(segment) == "table" and type(segment[1]) == "string" then
-            table.insert(translated_parts, segment[1])
-          end
-        end
-        local translated = table.concat(translated_parts, "")
-
-        if translated == "" then
-          vim.schedule(function() vim.lsp.buf.hover() end)
-          return
-        end
-
-        -- コードブロックを元に戻す
-        translated = unmask_code(translated, code_blocks)
-
-        vim.schedule(function()
-          local lines = vim.split(translated, "\n", { plain = true })
-          vim.lsp.util.open_floating_preview(lines, "markdown", {
-            border = "rounded",
-            focusable = true,
-          })
-        end)
-      end
-    )
+    translate_text(text, function(translated)
+      local lines = vim.split(translated, "\n", { plain = true })
+      vim.lsp.util.open_floating_preview(lines, "markdown", {
+        border = "rounded",
+        focusable = true,
+        wrap = true,
+      })
+    end)
   end)
 end
 
@@ -198,6 +211,7 @@ local function translated_diagnostic_float()
         vim.lsp.util.open_floating_preview(lines, "markdown", {
           border = "rounded",
           focusable = true,
+          wrap = true,
         })
       end)
     end
@@ -205,8 +219,45 @@ local function translated_diagnostic_float()
 end
 
 -- 共通 on_attach（ここで LSP のショートカットを定義）
-local function on_attach(_, bufnr)
+local function on_attach(client, bufnr)
   local opts = { buffer = bufnr, silent = true }
+
+  -- completionItem/resolve のリクエストをフックして日本語翻訳
+  if client and not client._completion_resolve_hooked then
+    client._completion_resolve_hooked = true
+    local orig_request = client.request
+    client.request = function(self, method, params, handler, req_bufnr)
+      if method == "completionItem/resolve" and handler then
+        local orig_handler = handler
+        handler = function(err, result, ctx, config)
+          if err or not result then
+            return orig_handler(err, result, ctx, config)
+          end
+
+          local doc = result.documentation
+          if not doc then
+            return orig_handler(err, result, ctx, config)
+          end
+
+          if type(doc) == "string" then
+            translate_text(doc, function(translated)
+              result.documentation = translated
+              orig_handler(err, result, ctx, config)
+            end)
+          elseif type(doc) == "table" and type(doc.value) == "string" then
+            translate_text(doc.value, function(translated)
+              result.documentation.value = translated
+              orig_handler(err, result, ctx, config)
+            end)
+          else
+            return orig_handler(err, result, ctx, config)
+          end
+          return
+        end
+      end
+      return orig_request(self, method, params, handler, req_bufnr)
+    end
+  end
 
   -- 🔍 定義/参照まわり
   vim.keymap.set("n", "gd", vim.lsp.buf.definition,    vim.tbl_extend("force", opts, { desc = "定義へジャンプ" }))
@@ -273,8 +324,6 @@ local function on_attach(_, bufnr)
     vim.cmd("copen")
   end, { desc = "現在バッファの診断エラーをQuickfixに表示" })
 end
-
-local translation_cache = {}
 
 local function translate_diagnostics(err, result, ctx, config, orig_handler)
   if not result or not result.diagnostics or #result.diagnostics == 0 then
@@ -354,6 +403,27 @@ M.on_attach = on_attach
 
 function M.setup()
   local capabilities = make_capabilities()
+
+  -- ホバーとシグネチャヘルプで折り返し表示 (wrap) を有効化し、見やすくする
+  local orig_hover = vim.lsp.handlers["textDocument/hover"] or vim.lsp.handlers.hover
+  vim.lsp.handlers["textDocument/hover"] = function(err, result, ctx, config)
+    config = vim.tbl_deep_extend("force", config or {}, {
+      border = "rounded",
+      wrap = true,
+      max_width = 80,
+    })
+    return orig_hover(err, result, ctx, config)
+  end
+
+  local orig_sig_help = vim.lsp.handlers["textDocument/signatureHelp"] or vim.lsp.handlers.signature_help
+  vim.lsp.handlers["textDocument/signatureHelp"] = function(err, result, ctx, config)
+    config = vim.tbl_deep_extend("force", config or {}, {
+      border = "rounded",
+      wrap = true,
+      max_width = 80,
+    })
+    return orig_sig_help(err, result, ctx, config)
+  end
 
   -- publishDiagnostics ハンドラーをフックして診断を自動日本語翻訳
   local orig_publish = vim.lsp.handlers["textDocument/publishDiagnostics"]
