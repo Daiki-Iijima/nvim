@@ -18,6 +18,19 @@ vim.opt.softtabstop = 2    -- Tab / Backspace キーで動く幅
 -- サインカラム（行番号の左にある余白）
 vim.opt.signcolumn = "yes:2" -- 常に 2 列分確保（git サイン + 診断アイコンが重ならない）
 
+-- スクロール余白
+vim.opt.scrolloff     = 8 -- カーソルが画面上下端から 8 行以内になると自動スクロール
+vim.opt.sidescrolloff = 8 -- 横スクロール時も同様に 8 列の余白を確保
+
+-- カーソル行ハイライト
+vim.opt.cursorline = true -- 現在行をハイライト表示
+
+-- 永続 undo
+vim.opt.undofile = true -- nvim を閉じても undo 履歴を保持する
+
+-- 行折り返し
+vim.opt.wrap = false -- 長い行を折り返さない（水平スクロールで見る）
+
 -- 折りたたみ
 vim.opt.foldmethod = "indent" -- インデントの深さをもとに折りたたみ範囲を決める
 vim.opt.foldlevel  = 99       -- デフォルトですべて展開した状態にする（99 = 実質全開）

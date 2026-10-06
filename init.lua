@@ -26,5 +26,6 @@ require("settings")
 require("lazy").setup({
   spec = {
     { import = "plugins" },
-  }
+  },
+  change_detection = { notify = false }, -- 設定変更検知の通知を無効化
 })
