@@ -60,8 +60,21 @@ return {
           "rafamadriz/friendly-snippets",
         },
         config = function()
+          local ls = require("luasnip")
           -- VS Code 形式のスニペットを LuaSnip に読み込む
           require("luasnip.loaders.from_vscode").lazy_load()
+          -- ejs ファイルで html スニペットを有効化
+          ls.filetype_extend("ejs", { "html" })
+          -- Normal mode に入ったらスニペットのジャンプセッションを終了
+          -- → その後 Tab を押しても前のスニペットに飛ばされなくなる
+          vim.api.nvim_create_autocmd("ModeChanged", {
+            pattern = { "i:n", "s:n" },
+            callback = function()
+              if ls.session.current_nodes[vim.api.nvim_get_current_buf()] and not ls.session.jump_active then
+                ls.unlink_current()
+              end
+            end,
+          })
         end,
       },
       "saadparwaiz1/cmp_luasnip", -- LuaSnip のスニペットを nvim-cmp に渡す接続層
@@ -83,7 +96,7 @@ return {
         },
 
         mapping = cmp.mapping.preset.insert({
-          ["<CR>"]      = cmp.mapping.confirm({ select = true }),
+          ["<CR>"]      = cmp.mapping.confirm({ select = false }),
           ["<C-Space>"] = cmp.mapping.complete(),
           ["<Tab>"] = function(fallback)
             if cmp.visible() then
@@ -118,6 +131,30 @@ return {
             { name = "path" },
           }
         ),
+
+        sorting = {
+          comparators = {
+            -- スニペットを候補リストの最下部に押し下げる比較関数
+            function(entry1, entry2)
+              local types = require("cmp.types")
+              local kind1 = entry1:get_kind()
+              local kind2 = entry2:get_kind()
+              if kind1 == types.lsp.CompletionItemKind.Snippet and kind2 ~= types.lsp.CompletionItemKind.Snippet then
+                return false
+              end
+              if kind2 == types.lsp.CompletionItemKind.Snippet and kind1 ~= types.lsp.CompletionItemKind.Snippet then
+                return true
+              end
+            end,
+            cmp.config.compare.offset,
+            cmp.config.compare.exact,
+            cmp.config.compare.score,
+            cmp.config.compare.kind,
+            cmp.config.compare.sort_text,
+            cmp.config.compare.length,
+            cmp.config.compare.order,
+          },
+        },
 
         window = {
           completion = {
@@ -155,28 +192,76 @@ return {
   -- -------------------------------------------------------------------
   {
     "nvim-treesitter/nvim-treesitter",
-    build = ":TSUpdate", -- プラグイン更新時にパーサーも自動更新
-    opts = {
-      ensure_installed = {
+    branch = "main",
+    lazy = false,           -- FileType autocmd を確実に登録するため eager に
+    build = ":TSUpdate",    -- プラグイン更新時にパーサーも自動更新
+    config = function()
+      -- 言語のエイリアス登録 (markdown 内の ```js や ```ts などのコードブロックのハイライト用)
+      vim.treesitter.language.register("javascript", "js")
+      vim.treesitter.language.register("typescript", "ts")
+      vim.treesitter.language.register("bash", "sh")
+      vim.treesitter.language.register("html", "ejs")
+
+      local parsers = {
         -- 設定ファイル系
-        "lua", "vim", "bash", "regex",
+        "lua", "vim", "vimdoc", "bash", "regex",
         -- マークアップ・スタイル
         "markdown", "markdown_inline",
         "html", "css", "scss",
-        -- データ形式
-        "json", "jsonc", "yaml", "toml",
+        -- データ形式 (jsonc は main ブランチで未サポート → json で代用)
+        "json", "yaml", "toml",
         -- Web フロントエンド
         "javascript", "typescript", "tsx",
-        -- システム言語
-        "rust",
-        -- その他（Apple / 汎用）
-        "swift",
-      },
-      highlight = { enable = true }, -- Treesitter によるハイライトを有効化
-      indent    = { enable = true }, -- Treesitter によるインデントを有効化
-    },
-    config = function(_, opts)
-      require("nvim-treesitter.configs").setup(opts)
+        -- システム/ネイティブ言語
+        "rust", "c", "cpp", "go", "c_sharp",
+      }
+      -- Swift は macOS でのみ (Linux だと tree-sitter CLI 互換性問題)
+      if vim.fn.has("mac") == 1 then
+        table.insert(parsers, "swift")
+      end
+
+      -- tree-sitter CLI 0.25+ は --no-bindings 廃止 (デフォルト動作)。
+      -- nvim-treesitter (main) はまだ --no-bindings を渡すので、ここで除去。
+      local ok_install, install = pcall(require, "nvim-treesitter.install")
+      if ok_install then
+        install.ts_generate_args = { "generate", "--abi", tostring(vim.treesitter.language_version) }
+      end
+
+      -- 非同期インストール (既にあれば no-op)
+      local ts = require("nvim-treesitter")
+      if type(ts.install) == "function" then
+        ts.install(parsers)
+      else
+        -- fallback: main ブランチ未同期 or 旧 master の場合
+        vim.schedule(function()
+          vim.cmd("TSInstall! " .. table.concat(parsers, " "))
+        end)
+      end
+
+      -- ハイライト/インデントを FileType フックで有効化
+      -- (main ブランチは「自分で treesitter.start() を呼ぶ」設計に変わった)
+      local function start_treesitter(bufnr)
+        if vim.bo[bufnr].filetype == "" then
+          return
+        end
+
+        if pcall(vim.treesitter.start, bufnr) then
+          vim.bo[bufnr].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end
+      end
+
+      vim.api.nvim_create_autocmd("FileType", {
+        callback = function(args)
+          start_treesitter(args.buf)
+        end,
+      })
+
+      -- `nvim file.js` の初回バッファは FileType が先に発火することがある。
+      for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_loaded(bufnr) then
+          start_treesitter(bufnr)
+        end
+      end
     end,
   },
 

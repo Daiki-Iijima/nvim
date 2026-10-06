@@ -24,13 +24,17 @@ return {
     "nvim-tree/nvim-web-devicons",
   },
   opts = {
+    sign = { enabled = false }, -- サインカラムへのアイコン表示を無効化（バッファ内に既に表示されるため冗長）
+    yaml = { enabled = false }, -- YAML コードブロック内の - をbulletとしてレンダリングしない
     heading = {
-      -- 見出しレベル（H1〜H6）ごとのアイコン
-      icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
+      -- アイコンなし・背景色のみで見出しレベルを表現
+      icons = {},
+      sign = false,
     },
     code = {
-      enabled = true,    -- コードブロックの装飾を有効化
-      style   = "full",  -- "full" → 行全体に背景色を付ける（"normal" は左端のみ）
+      enabled  = true,   -- コードブロックの装飾を有効化
+      style    = "full", -- "full" → 行全体に背景色を付ける（"normal" は左端のみ）
+      left_pad = 1,      -- 言語アイコンの左に余白を追加（左端でのクリップを防ぐ）
     },
     bullet = {
       -- リストの階層ごとにアイコンを変える
