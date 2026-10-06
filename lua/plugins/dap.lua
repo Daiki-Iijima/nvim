@@ -99,10 +99,16 @@ return {
         },
       }
 
-      -- macOS: lldb-dap（Homebrew LLVM）をフォールバックとして追加
+      -- lldb-dap アダプタ（OS 自動判定）
+      local lldb_cmd = vim.fn.has("mac") == 1
+        and "/opt/homebrew/opt/llvm/bin/lldb-dap"
+        or  (vim.fn.executable("lldb-dap") == 1 and "lldb-dap"
+             or vim.fn.executable("lldb-vscode-14") == 1 and "lldb-vscode-14"
+             or "lldb-vscode")
+
       dap.adapters.lldb = {
         type    = "executable",
-        command = "/opt/homebrew/opt/llvm/bin/lldb-dap",
+        command = lldb_cmd,
         name    = "lldb",
       }
 
@@ -126,6 +132,30 @@ return {
           sourceLanguages = { "rust" },
         },
       }
+
+      --------------------------------------------------------
+      -- C / C++ の起動設定（lldb-dap 使用）
+      --------------------------------------------------------
+      dap.configurations.c = {
+        {
+          name    = "Launch (lldb)",
+          type    = "lldb",
+          request = "launch",
+          program = function()
+            return vim.fn.input(
+              "実行ファイル: ",
+              vim.fn.getcwd() .. "/",
+              "file"
+            )
+          end,
+          cwd         = "${workspaceFolder}",
+          stopOnEntry = true,
+          args        = {},
+          initCommands = { "settings set plugin.jit-loader.gdb.enable false" },
+        },
+      }
+
+      dap.configurations.cpp = dap.configurations.c
 
       --------------------------------------------------------
       -- キーマップ

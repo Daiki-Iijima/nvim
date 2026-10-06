@@ -291,6 +291,7 @@ function M.setup()
   require("lang.php").setup()
   require("lang.typescript").setup()
   require("lang.web").setup()    -- HTML / CSS / Tailwind / Emmet / JSON / YAML
+  require("lang.c").setup()      -- C / C++
 
   -- 有効化したい LSP を起動
   -- ※ rust_analyzer は rustaceanvim が管理するため除外
@@ -310,6 +311,8 @@ function M.setup()
     "emmet_language_server",  -- Emmet
     "jsonls",                 -- JSON
     "yamlls",                 -- YAML
+    -- C / C++
+    "clangd",                 -- C / C++
   })
 end
 

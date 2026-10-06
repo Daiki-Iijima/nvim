@@ -10,6 +10,7 @@ return {
       -- Explorer の picker に対してだけ list のキーを上書き
       sources = {
         explorer = {
+          ignored = true, -- .gitignore に含まれるファイルも表示する
           win = {
             list = {
               keys = {

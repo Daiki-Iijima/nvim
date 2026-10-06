@@ -24,11 +24,8 @@ map("n", "<leader>Q", ":q!<CR>", opts) -- 強制終了（未保存の変更を�
 -----------------------------------------------------
 -- ウィンドウ移動
 -----------------------------------------------------
--- <C-w>h/j/k/l の短縮版。分割ウィンドウ間を素早く移動する
-map("n", "<leader>h", "<C-w>h", opts) -- 左のウィンドウへ
-map("n", "<leader>j", "<C-w>j", opts) -- 下のウィンドウへ
-map("n", "<leader>k", "<C-w>k", opts) -- 上のウィンドウへ
-map("n", "<leader>l", "<C-w>l", opts) -- 右のウィンドウへ
+-- vim-tmux-navigator が <C-h/j/k/l> でウィンドウ/ペイン移動を担当している
+-- （lua/plugins/vim-tmux-navigator.lua 参照）
 
 -- ウィンドウのリサイズ（Ctrl + 矢印キー）
 map("n", "<C-Up>",    ":resize -2<CR>",          opts) -- 高さを縮める

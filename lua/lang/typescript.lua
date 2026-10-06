@@ -65,10 +65,10 @@ function M.setup()
   local ok_conform, conform = pcall(require, "conform")
   if ok_conform then
     conform.formatters_by_ft = conform.formatters_by_ft or {}
-    conform.formatters_by_ft.javascript      = { "prettier" }
-    conform.formatters_by_ft.javascriptreact = { "prettier" }
-    conform.formatters_by_ft.typescript      = { "prettier" }
-    conform.formatters_by_ft.typescriptreact = { "prettier" }
+    conform.formatters_by_ft.javascript      = { "biome", "prettier", stop_after_first = true }
+    conform.formatters_by_ft.javascriptreact = { "biome", "prettier", stop_after_first = true }
+    conform.formatters_by_ft.typescript      = { "biome", "prettier", stop_after_first = true }
+    conform.formatters_by_ft.typescriptreact = { "biome", "prettier", stop_after_first = true }
     -- html / css / json は web.lua で設定
   end
 end
