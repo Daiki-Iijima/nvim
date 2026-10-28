@@ -1,48 +1,14 @@
 -- =============================================================================
 -- dial.nvim: スマートなインクリメント/デクリメント
 -- =============================================================================
--- Ctrl+a (加算) / Ctrl+x (減算) を拡張し、数値だけでなく日付、時間、
--- 真偽値 (true ⇄ false), and ⇄ or, yes ⇄ no などの切り替えを可能にします。
+-- 数値だけでなく日付、時間、真偽値 (true ⇄ false), and ⇄ or, yes ⇄ no などをカーソル下で切り替える。
+-- キーは張らない（<C-a>/<C-x> は Neovim 標準の数値の加減算のまま）。コマンドパレット（<leader>:）から
+--   :DialIncrement / :DialDecrement
 -- =============================================================================
 
 return {
   "monaqa/dial.nvim",
-  keys = {
-    {
-      "<C-a>",
-      function()
-        return require("dial.map").inc_normal()
-      end,
-      expr = true,
-      desc = "Dial: スマート加算",
-    },
-    {
-      "<C-x>",
-      function()
-        return require("dial.map").dec_normal()
-      end,
-      expr = true,
-      desc = "Dial: スマート減算",
-    },
-    {
-      "<C-a>",
-      function()
-        return require("dial.map").inc_visual()
-      end,
-      expr = true,
-      mode = "v",
-      desc = "Dial: スマート加算 (選択)",
-    },
-    {
-      "<C-x>",
-      function()
-        return require("dial.map").dec_visual()
-      end,
-      expr = true,
-      mode = "v",
-      desc = "Dial: スマート減算 (選択)",
-    },
-  },
+  cmd = { "DialIncrement", "DialDecrement" },
   config = function()
     local augend = require("dial.augend")
     require("dial.config").augends:register_group({
@@ -65,5 +31,10 @@ return {
         }),
       },
     })
+    for name, plug in pairs({ DialIncrement = "<Plug>(dial-increment)", DialDecrement = "<Plug>(dial-decrement)" }) do
+      vim.api.nvim_create_user_command(name, function()
+        vim.api.nvim_feedkeys(vim.keycode(plug), "m", false)
+      end, { desc = "Dial: カーソル下を切り替え" })
+    end
   end,
 }

@@ -10,9 +10,10 @@
 --   <F10>        -- ステップオーバー
 --   <F11>        -- ステップイン
 --   <F12>        -- ステップアウト
---   <leader>dR   -- REPL を開く
---   <leader>dU   -- DAP の画面（nvim-dap-view）の表示切替
---   <leader>dl   -- 直前のデバッグを再実行
+--   それ以外はキーを張らない。コマンドパレット（<leader>:）から:
+--   :DapToggleRepl  -- REPL の表示切替
+--   :DapViewToggle  -- DAP の画面（nvim-dap-view）の表示切替
+--   :DapRunLast     -- 直前のデバッグを再実行
 
 return {
   {
@@ -24,10 +25,8 @@ return {
       { "<F10>",       desc = "DAP: ステップオーバー" },
       { "<F11>",       desc = "DAP: ステップイン" },
       { "<F12>",       desc = "DAP: ステップアウト" },
-      { "<leader>dR",  desc = "DAP: REPL を開く" },
-      { "<leader>dU",  desc = "DAP: UI 切替" },
-      { "<leader>dl",  desc = "DAP: 直前を再実行" },
     },
+    cmd = { "DapToggleRepl", "DapViewToggle", "DapRunLast" },
     dependencies = {
       ------------------------------------------------------------
       -- DAP の画面（変数・ブレークポイント・スタック・REPL を下のタブで切り替え）
@@ -109,9 +108,7 @@ return {
       map("n", "<F10>",      dap.step_over,         { desc = "DAP: ステップオーバー" })
       map("n", "<F11>",      dap.step_into,         { desc = "DAP: ステップイン" })
       map("n", "<F12>",      dap.step_out,          { desc = "DAP: ステップアウト" })
-      map("n", "<leader>dR", dap.repl.open,         { desc = "DAP: REPL を開く" })
-      map("n", "<leader>dU", function() require("dap-view").toggle() end, { desc = "DAP: UI 切替" })
-      map("n", "<leader>dl", dap.run_last,          { desc = "DAP: 直前を再実行" })
+      vim.api.nvim_create_user_command("DapRunLast", dap.run_last, { desc = "DAP: 直前を再実行" })
     end,
   },
 }

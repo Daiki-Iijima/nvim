@@ -130,34 +130,46 @@ return {
 
     local map = vim.keymap.set
 
-    -- ===== Picker =====
-    map("n", "<leader>ff", function() Snacks.picker.files() end,   { desc = "ファイルを検索して開く" })
-    map("n", "<leader>fg", function() Snacks.picker.grep() end,    { desc = "ファイル内の文字列を横断検索" })
-    map("n", "<leader>fr", function() Snacks.picker.recent() end,  { desc = "最近開いたファイルを表示" })
-    map("n", "<leader>fb", function() Snacks.picker.buffers() end, { desc = "開いているバッファ一覧" })
-    map("n", "<leader>fh", function() Snacks.picker.help() end,    { desc = "ヘルプを検索" })
-    map("n", "<leader>fk", function() Snacks.picker.keymaps() end, { desc = "キーマップ一覧を表示" })
+    -- 入口は 3 つ: 探す（<leader><space> / <leader>/ / <leader>f*）・コードの操作（Neovim 既定の gr* / K / [d ]d）・
+    -- それ以外はコマンドパレット（<leader>: コマンド一覧 / <leader>? キー一覧）。早見表は :Cheatsheet
 
-    -- ===== Scratch ====
-    map("n", "<leader>S", function() Snacks.scratch() end, { desc = "スクラッチファイルを開く" })
+    -- ===== 探す =====
+    map("n", "<leader><space>", function() Snacks.picker.smart() end, { desc = "探す: ファイル（最近・バッファ優先）" })
+    map("n", "<leader>/", function() Snacks.picker.grep() end,          { desc = "探す: 文字列（プロジェクト全体）" })
+    map("n", "<leader>ff", function() Snacks.picker.files() end,   { desc = "ファイル" })
+    map("n", "<leader>fg", function() Snacks.picker.grep() end,    { desc = "文字列（grep）" })
+    map("n", "<leader>fr", function() Snacks.picker.recent() end,  { desc = "最近のファイル" })
+    map("n", "<leader>fb", function() Snacks.picker.buffers() end, { desc = "バッファ" })
+    map("n", "<leader>fh", function() Snacks.picker.help() end,    { desc = "ヘルプ" })
+    map("n", "<leader>fd", function() Snacks.picker.diagnostics() end,        { desc = "診断（プロジェクト全体）" })
+    map("n", "<leader>fD", function() Snacks.picker.diagnostics_buffer() end, { desc = "診断（このファイル）" })
+    map("n", "<leader>fs", function() Snacks.picker.lsp_symbols() end,        { desc = "シンボル" })
+    map("n", "<leader>fq", function() Snacks.picker.qflist() end,             { desc = "Quickfix" })
 
-    -- ===== LSP =====
-    map("n", "<leader>lr", vim.lsp.buf.rename,              { desc = "LSP: シンボルをリネーム" })
-    map("n", "<leader>ld", Snacks.picker.lsp_definitions,   { desc = "LSP: 定義へジャンプ (Picker)" })
-    map("n", "<leader>lR", Snacks.picker.lsp_references,    { desc = "LSP: 参照一覧 (Picker)" })
-    map("n", "<leader>li", Snacks.picker.lsp_implementations, { desc = "LSP: 実装一覧 (Picker)" })
+    -- ===== コマンドパレット（めったに使わないものはここから呼ぶ）=====
+    map("n", "<leader>:", function() Snacks.picker.commands() end, { desc = "コマンドパレット" })
+    map("n", "<leader>?", function() Snacks.picker.keymaps() end,  { desc = "キー一覧" })
+    vim.api.nvim_create_user_command("Scratch", function() Snacks.scratch() end, { desc = "スクラッチファイルを開く" })
 
-    -- ===== 診断・シンボル一覧（旧 trouble.nvim と同じキー）=====
-    map("n", "<leader>tt", function() Snacks.picker.diagnostics() end,        { desc = "診断: プロジェクト全体" })
-    map("n", "<leader>td", function() Snacks.picker.diagnostics_buffer() end, { desc = "診断: 現在のファイル" })
-    map("n", "<leader>ts", function() Snacks.picker.lsp_symbols() end,        { desc = "LSP: シンボル一覧" })
-    map("n", "<leader>tr", function() Snacks.picker.lsp_references() end,     { desc = "LSP: 参照一覧" })
-    map("n", "<leader>tq", function() Snacks.picker.qflist() end,             { desc = "Quickfix 一覧" })
+    -- 早見表: README.md の <!-- cheatsheet:start --> 〜 <!-- cheatsheet:end --> を浮いた窓で出す（表は README の 1 か所だけ）
+    vim.api.nvim_create_user_command("Cheatsheet", function()
+      local lines = vim.fn.readfile(vim.fn.stdpath("config") .. "/README.md")
+      local s = vim.fn.index(lines, "<!-- cheatsheet:start -->")
+      local e = vim.fn.index(lines, "<!-- cheatsheet:end -->")
+      Snacks.win({
+        text = vim.list_slice(lines, s + 2, e),
+        ft = "markdown",
+        width = 0.6,
+        height = 0.8,
+        border = "rounded",
+        title = " 早見表（q で閉じる） ",
+        bo = { modifiable = false },
+        wo = { wrap = false, conceallevel = 2 },
+      })
+    end, { desc = "早見表（普段使うキー）" })
 
     -- ===== Git =====
-    map("n", "<leader>lg", function()
-      Snacks.lazygit()
-    end, { desc = "LazyGit を開く" })
+    map("n", "<leader>gg", function() Snacks.lazygit() end, { desc = "LazyGit" })
 
     -- ===== Explorer (toggle) =====
     map("n", "<C-n>", function()
@@ -169,11 +181,11 @@ return {
       Snacks.terminal()
     end, { desc = "ターミナルを開閉" })
 
-    -- ===== Toggles (on/off) =====
-    Snacks.toggle.option("spell", { name = "スペルチェック" }):map("<leader>us")
-    Snacks.toggle.option("wrap", { name = "行の折り返し" }):map("<leader>uw")
-    Snacks.toggle.option("relativenumber", { name = "相対行番号" }):map("<leader>uL")
-    Snacks.toggle.diagnostics():map("<leader>ud")
-    Snacks.toggle.inlay_hints():map("<leader>uh")
+    -- ===== 切り替え（on/off）=====
+    Snacks.toggle.option("spell", { name = "スペルチェック" }):map("<leader>ts")
+    Snacks.toggle.option("wrap", { name = "行の折り返し" }):map("<leader>tw")
+    Snacks.toggle.option("relativenumber", { name = "相対行番号" }):map("<leader>tn")
+    Snacks.toggle.diagnostics():map("<leader>td")
+    Snacks.toggle.inlay_hints():map("<leader>th")
   end,
 }

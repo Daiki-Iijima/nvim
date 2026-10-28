@@ -1,21 +1,10 @@
+-- code_runner.nvim: キーは張らない。コマンドパレット（<leader>:）か直接打つ:
+--   :RunCode        今のファイルを実行（フロートに出力）
+--   :RunCode 引数   引数を付けて実行
 return {
   "CRAG666/code_runner.nvim",
   dependencies = { "nvim-lua/plenary.nvim" },
   cmd = { "RunCode", "RunFile", "RunProject", "RunClose" },
-  keys = {
-    { "<leader>x", "<cmd>RunCode<cr>", silent = true, desc = "コードを実行" },
-    {
-      "<leader>X",
-      function()
-        vim.ui.input({ prompt = "実行引数: " }, function(args)
-          if args == nil then return end
-          vim.cmd("RunCode " .. args)
-        end)
-      end,
-      silent = true,
-      desc = "引数を指定してコードを実行",
-    },
-  },
   opts = {
     mode = "float",      -- フローティングウィンドウに出力
     focus = true,        -- 実行後フロートにフォーカス

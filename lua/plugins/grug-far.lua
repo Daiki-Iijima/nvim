@@ -16,9 +16,9 @@ return {
   },
   keys = {
     {
-      "<leader>sr",
+      "<leader>cR",
       "<cmd>GrugFar<cr>",
-      desc = "GrugFar: プロジェクト内一括置換を開く",
+      desc = "プロジェクト内を一括置換",
     },
   },
 }

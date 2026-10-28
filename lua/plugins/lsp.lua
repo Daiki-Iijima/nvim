@@ -273,7 +273,7 @@ return {
     "stevearc/conform.nvim",
     event = { "BufReadPre", "BufNewFile" },
     keys = {
-      { "<leader>f", function() require("conform").format({ async = true, lsp_format = "fallback" }) end, desc = "ファイルをフォーマット" },
+      { "<leader>cf", function() require("conform").format({ async = true, lsp_format = "fallback" }) end, desc = "フォーマット" },
     },
     opts = {
       format_on_save = {

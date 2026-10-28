@@ -1,64 +1,29 @@
+-- venn.nvim: 線で図を描く。キーは張らない。コマンドパレット（<leader>:）か :VennToggle で切り替える。
+-- 描くモード中だけ（このバッファ）: H/J/K/L で線を引く・ビジュアルブロックで <C-b> 箱を描く
 return {
   "jbyuki/venn.nvim",
-
-  -- markdown を開いたときだけ読み込む
-  ft = { "markdown" },
+  cmd = { "VennToggle", "VBox" },
 
   config = function()
-    -- グローバル関数としてトグル定義（中身はバッファローカルフラグを見る）
-    function _G.Toggle_venn()
-      local enabled = vim.b.venn_enabled
-
-      if not enabled then
-        print("Enabling venn mode")
+    local keys = { H = "h", J = "j", K = "k", L = "l" }
+    vim.api.nvim_create_user_command("VennToggle", function()
+      if not vim.b.venn_enabled then
         vim.b.venn_enabled = true
         vim.cmd([[setlocal ve=all]])
-
-        -- 線／矢印のショートカット（このバッファだけ）
-        vim.keymap.set("n", "J", "<C-v>j:VBox<CR>", { buffer = true, noremap = true })
-        vim.keymap.set("n", "K", "<C-v>k:VBox<CR>", { buffer = true, noremap = true })
-        vim.keymap.set("n", "L", "<C-v>l:VBox<CR>", { buffer = true, noremap = true })
-        vim.keymap.set("n", "H", "<C-v>h:VBox<CR>", { buffer = true, noremap = true })
-
-        -- 必要ならここで見た目調整もできる（今は何もしなくてもOK）
-        -- pcall(vim.cmd, "DisableHLIndent")
+        for lhs, dir in pairs(keys) do
+          vim.keymap.set("n", lhs, "<C-v>" .. dir .. ":VBox<CR>", { buffer = true })
+        end
+        vim.keymap.set("v", "<C-b>", ":VBox<CR>", { buffer = true })
+        print("venn: 描くモード ON")
       else
-        print("Disabling venn mode")
         vim.b.venn_enabled = nil
         vim.cmd([[setlocal ve=]])
-
-        vim.keymap.del("n", "J", { buffer = true })
-        vim.keymap.del("n", "K", { buffer = true })
-        vim.keymap.del("n", "L", { buffer = true })
-        vim.keymap.del("n", "H", { buffer = true })
-
-        -- pcall(vim.cmd, "EnableHLIndent")
+        for lhs in pairs(keys) do
+          vim.keymap.del("n", lhs, { buffer = true })
+        end
+        vim.keymap.del("v", "<C-b>", { buffer = true })
+        print("venn: 描くモード OFF")
       end
-    end
-
-    -- markdown バッファが開かれたときにだけキーマップを張る
-    vim.api.nvim_create_autocmd("FileType", {
-      pattern = "markdown",
-      callback = function(ev)
-        local bufnr = ev.buf
-
-        -- venn モード ON/OFF（この markdown バッファだけ）
-        vim.keymap.set(
-          "n",
-          "<leader>v",
-          Toggle_venn,
-          { buffer = bufnr, noremap = true, silent = true }
-        )
-
-        -- ビジュアルブロック中に Ctrl+b で Box 作成（これも markdown だけ）
-        vim.keymap.set(
-          "v",
-          "<C-b>",
-          ":VBox<CR>",
-          { buffer = bufnr, noremap = true }
-        )
-      end,
-    })
+    end, { desc = "venn: 線で図を描くモードの切り替え" })
   end,
 }
-

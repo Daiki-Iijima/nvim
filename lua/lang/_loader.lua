@@ -53,7 +53,7 @@ local function unmask_code(text, blocks)
   end))
 end
 
--- 日本語に翻訳する（K と <leader>e を押したときだけ Google 翻訳に送る）
+-- 日本語に翻訳する（K と <leader>ce を押したときだけ Google 翻訳に送る）
 local translation_cache = {}
 
 local function translate_text(text, cb)
@@ -169,10 +169,6 @@ local function set_keymaps(bufnr)
   vim.keymap.set("n", "K",  function() translated_hover(bufnr) end, vim.tbl_extend("force", opts, { desc = "ホバー情報を日本語で表示" }))
   vim.keymap.set("n", "gK", vim.lsp.buf.hover, vim.tbl_extend("force", opts, { desc = "ホバー情報を原文で表示" }))
 
-  -- 🛠 リファクタリング
-  vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename,      vim.tbl_extend("force", opts, { desc = "シンボルをリネーム" }))
-  vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, vim.tbl_extend("force", opts, { desc = "コードアクションを表示" }))
-
   -- 🪟 ホバーウィンドウのスクロール
   local function scroll_float(delta)
     local win = vim.b.lsp_floating_preview
@@ -193,21 +189,9 @@ local function set_keymaps(bufnr)
     if not scroll_float(-4) then return "<C-u>" end
   end, { expr = true, buffer = bufnr, silent = true, desc = "ホバー/画面を上スクロール" })
 
-  -- ⚠️ 診断
-  vim.keymap.set("n", "<leader>e", translated_diagnostic_float,
-    vim.tbl_extend("force", opts, { desc = "診断エラーの詳細を日本語でフロート表示" }))
-
-  -- 診断を Quickfix に流して開く
-  vim.keymap.set("n", "<leader>dq", function()
-    vim.diagnostic.setqflist()
-    vim.cmd("copen")
-  end, { desc = "全診断エラーをQuickfixに表示" })
-
-  -- 現在バッファだけ Quickfix に流す
-  vim.keymap.set("n", "<leader>db", function()
-    vim.diagnostic.setqflist({ bufnr = 0 })
-    vim.cmd("copen")
-  end, { desc = "現在バッファの診断エラーをQuickfixに表示" })
+  -- ⚠️ 診断（一覧は <leader>fd / <leader>fD の picker。<C-q> で Quickfix に送れる）
+  vim.keymap.set("n", "<leader>ce", translated_diagnostic_float,
+    vim.tbl_extend("force", opts, { desc = "診断の詳細を日本語で" }))
 end
 
 function M.setup()

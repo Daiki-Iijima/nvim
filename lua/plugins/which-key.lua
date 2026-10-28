@@ -15,17 +15,14 @@ return {
     delay = function(ctx)
       return ctx.plugin and 0 or 500
     end,
+    -- <leader> のグループは 6 つだけ。めったに使わないものは <leader>: （コマンドパレット）から
     spec = {
-      { "<leader>f", group = "Find / Format", icon = "🔍" },
+      { "<leader>f", group = "探す", icon = "🔍" },
       { "<leader>g", group = "Git", icon = "󰊢 " },
-      { "<leader>l", group = "LSP", icon = " " },
-      { "<leader>d", group = "Diagnostics / Quickfix", icon = " " },
-      { "<leader>c", group = "Code / Linter", icon = "💻" },
-      { "<leader>t", group = "Diagnostics / Symbols", icon = "🚦" },
-      { "<leader>s", group = "Search / Replace", icon = "🔁" },
-      { "<leader>u", group = "Toggle / UI Options", icon = "⚙️" },
-      { "<leader>n", group = "Node / package.json", icon = "📦" },
+      { "<leader>c", group = "コード", icon = "💻" },
       { "<leader>a", group = "AI (omp)", icon = "🤖" },
+      { "<leader>t", group = "切り替え", icon = "⚙️" },
+      { "<leader>l", group = "言語ごと", icon = " " },
     },
   },
 }

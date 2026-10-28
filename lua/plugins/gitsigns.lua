@@ -10,7 +10,7 @@ return {
       changedelete = { text = "▎" },
       untracked    = { text = "▎" },
     },
-    current_line_blame = false, -- <leader>gb でトグル
+    current_line_blame = false, -- <leader>gB でトグル
   },
   config = function(_, opts)
     local gs = require("gitsigns")

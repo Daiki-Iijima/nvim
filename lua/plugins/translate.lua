@@ -1,3 +1,6 @@
+-- translate.nvim: キーは張らない。コマンドパレット（<leader>:）か直接打つ:
+--   :Translate JA                 選択範囲 or カーソル単語を日本語に（ビジュアルなら :'<,'>Translate JA）
+--   :Translate JA -output=insert  翻訳結果をカーソル下に挿入
 return {
   "uga-rosa/translate.nvim",
   cmd = "Translate",
@@ -15,17 +18,5 @@ return {
         },
       },
     })
-
-    local map = vim.keymap.set
-
-    -- <leader>t : 選択範囲 or カーソル単語を日本語に翻訳
-    map({ "n", "v" }, "<leader>t", function()
-      vim.cmd("Translate JA")
-    end, { desc = "翻訳（日本語）" })
-
-    -- <leader>T : 翻訳結果をカーソル下に挿入
-    map({ "n", "v" }, "<leader>T", function()
-      vim.cmd("Translate JA -output=insert")
-    end, { desc = "翻訳して挿入" })
   end,
 }

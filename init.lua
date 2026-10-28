@@ -16,6 +16,9 @@ vim.opt.rtp:prepend(lazypath)
 -- 24bitカラーを有効にする
 vim.opt.termguicolors = true
 
+-- 使った記録（キーとコマンドの回数だけ。キーを張る前に包む）
+require("usage").setup()
+
 -- lua/keymaps.luaからnvimのkeymapを読み込む
 require("keymaps")
 

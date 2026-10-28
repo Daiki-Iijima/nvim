@@ -2,13 +2,13 @@
 -- バージョン情報のインライン表示・アップデート・追加・削除など
 -- npm / yarn / pnpm / bun を自動検出
 --
--- 主なキーマップ（lazy の keys で登録。fk/which-key の検索に常時表示される）:
---   <leader>ns  -- 依存バージョン情報の表示切替
---   <leader>nc  -- 古い依存をハイライト（force 表示）
---   <leader>nu  -- カーソル下の依存を最新に更新
---   <leader>nd  -- カーソル下の依存を削除
---   <leader>ni  -- 新しいパッケージを追加（名前を手入力）
---   <leader>np  -- カーソル下の依存のバージョンを変更
+-- キーは張らない。コマンドパレット（<leader>:）から呼ぶ:
+--   :PackageInfoToggle         -- 依存バージョン情報の表示切替
+--   :PackageInfoShowForce      -- 古い依存を表示（キャッシュを無視）
+--   :PackageInfoUpdate         -- カーソル下の依存を最新に更新
+--   :PackageInfoDelete         -- カーソル下の依存を削除
+--   :PackageInfoInstall        -- 新しいパッケージを追加（名前を手入力）
+--   :PackageInfoChangeVersion  -- カーソル下の依存のバージョンを変更
 
 -- 対策: install 等が "Not in a JS/TS project" で止まる問題を回避する。
 -- 原因は state.is_in_project が false のまま:
@@ -39,13 +39,9 @@ return {
     "vuki656/package-info.nvim",
     dependencies = { "MunifTanjim/nui.nvim" },
     event = { "BufRead package.json" }, -- package.json を開いたらインライン表示
-    keys = {
-      { "<leader>ns", function() require("package-info").toggle() end,                          desc = "Package: 表示切替" },
-      { "<leader>nc", function() require("package-info").show() end,                            desc = "Package: 古い依存を表示" },
-      { "<leader>nu", function() ensure_in_project() require("package-info").update() end,         desc = "Package: 依存を更新" },
-      { "<leader>nd", function() ensure_in_project() require("package-info").delete() end,         desc = "Package: 依存を削除" },
-      { "<leader>ni", function() ensure_in_project() require("package-info").install() end,        desc = "Package: パッケージを追加" },
-      { "<leader>np", function() ensure_in_project() require("package-info").change_version() end, desc = "Package: バージョン変更" },
+    cmd = {
+      "PackageInfoToggle", "PackageInfoShow", "PackageInfoShowForce", "PackageInfoHide",
+      "PackageInfoUpdate", "PackageInfoDelete", "PackageInfoInstall", "PackageInfoChangeVersion",
     },
     opts = {
       hide_up_to_date = false, -- 最新の依存も表示する
@@ -58,7 +54,20 @@ return {
       },
     },
     config = function(_, opts)
-      require("package-info").setup(opts)
+      local pi = require("package-info")
+      pi.setup(opts)
+      -- 依存を書き換えるコマンドは、実行の直前に ensure_in_project() を通すよう上書きする
+      for name, fn in pairs({
+        PackageInfoUpdate = "update",
+        PackageInfoDelete = "delete",
+        PackageInfoInstall = "install",
+        PackageInfoChangeVersion = "change_version",
+      }) do
+        vim.api.nvim_create_user_command(name, function()
+          ensure_in_project()
+          pi[fn]()
+        end, { desc = "Package: " .. fn })
+      end
     end,
   },
 }

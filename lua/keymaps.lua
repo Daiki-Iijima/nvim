@@ -17,19 +17,15 @@ vim.g.maplocalleader = ","
 -----------------------------------------------------
 -- ファイル操作
 -----------------------------------------------------
-map("n", "<leader>w", ":w<CR>",  opts) -- 上書き保存
-map("n", "<leader>wq", ":wq<CR>", opts) -- 保存して終了
-map("n", "<leader>q", ":q<CR>",  opts) -- 終了（未保存の変更があれば警告）
-map("n", "<leader>Q", ":q!<CR>", opts) -- 強制終了（未保存の変更を破棄）
+-- <leader>wq は <leader>w と頭が重なる（<leader>w が待たされる）ので外した。保存して終了は :wq か ZZ
+map("n", "<leader>w", ":w<CR>",  vim.tbl_extend("force", opts, { desc = "保存" }))
+map("n", "<leader>q", ":q<CR>",  vim.tbl_extend("force", opts, { desc = "閉じる" })) -- 未保存の変更があれば警告
+map("n", "<leader>Q", ":q!<CR>", vim.tbl_extend("force", opts, { desc = "保存せず閉じる" }))
 
 -----------------------------------------------------
 -- ウィンドウ移動
 -----------------------------------------------------
--- <C-w>h/j/k/l の短縮版。分割ウィンドウ間を素早く移動する
-map("n", "<leader>h", "<C-w>h", opts) -- 左のウィンドウへ
-map("n", "<leader>j", "<C-w>j", opts) -- 下のウィンドウへ
-map("n", "<leader>k", "<C-w>k", opts) -- 上のウィンドウへ
-map("n", "<leader>l", "<C-w>l", opts) -- 右のウィンドウへ
+-- <C-h>/<C-j>/<C-k>/<C-l>（vim-tmux-navigator）を使う。<leader>h/j/k/l は同じ動きの重複なので外した
 
 -- ウィンドウのリサイズ（Ctrl + 矢印キー）
 map("n", "<C-Up>",    ":resize -2<CR>",          opts) -- 高さを縮める
