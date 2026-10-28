@@ -147,6 +147,13 @@ return {
     map("n", "<leader>lR", Snacks.picker.lsp_references,    { desc = "LSP: 参照一覧 (Picker)" })
     map("n", "<leader>li", Snacks.picker.lsp_implementations, { desc = "LSP: 実装一覧 (Picker)" })
 
+    -- ===== 診断・シンボル一覧（旧 trouble.nvim と同じキー）=====
+    map("n", "<leader>tt", function() Snacks.picker.diagnostics() end,        { desc = "診断: プロジェクト全体" })
+    map("n", "<leader>td", function() Snacks.picker.diagnostics_buffer() end, { desc = "診断: 現在のファイル" })
+    map("n", "<leader>ts", function() Snacks.picker.lsp_symbols() end,        { desc = "LSP: シンボル一覧" })
+    map("n", "<leader>tr", function() Snacks.picker.lsp_references() end,     { desc = "LSP: 参照一覧" })
+    map("n", "<leader>tq", function() Snacks.picker.qflist() end,             { desc = "Quickfix 一覧" })
+
     -- ===== Git =====
     map("n", "<leader>lg", function()
       Snacks.lazygit()

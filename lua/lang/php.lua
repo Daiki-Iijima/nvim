@@ -17,19 +17,12 @@ function M.setup()
   })
 
   --------------------------------------------------------------------
-  -- Formatter（Conform / Pint）
+  -- Formatter（Conform / Pint）: setup は plugins/lsp.lua の 1 回だけ。ここでは php を足すだけ
   --------------------------------------------------------------------
   local ok, conform = pcall(require, "conform")
   if ok then
-    conform.setup({
-      formatters_by_ft = {
-        php = { "pint" },
-      },
-      format_on_save = {
-        timeout_ms = 500,
-        lsp_fallback = true,
-      },
-    })
+    conform.formatters_by_ft = conform.formatters_by_ft or {}
+    conform.formatters_by_ft.php = { "pint" }
   end
 end
 

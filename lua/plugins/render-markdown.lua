@@ -18,12 +18,13 @@
 
 return {
   "MeanderingProgrammer/render-markdown.nvim",
-  ft = { "markdown", "codecompanion" }, -- Markdown/CodeCompanion を開いたときだけ読み込む
+  ft = { "markdown" }, -- Markdown を開いたときだけ読み込む
   dependencies = {
     "nvim-treesitter/nvim-treesitter",
     "nvim-tree/nvim-web-devicons",
   },
   opts = {
+    render_modes = { "n", "c", "t", "nt" }, -- 下の端末にいる間（nt）も描画を外さない（:LH layout 用）
     heading = {
       -- 見出しレベル（H1〜H6）ごとのアイコン
       icons = { "┃ ", "┃ ", "┃ ", "┃ ", "┃ ", "┃ " },

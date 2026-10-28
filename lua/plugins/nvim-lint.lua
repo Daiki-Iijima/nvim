@@ -8,10 +8,10 @@
 -- nvim-lint はコードの問題検出（lint）を担当する。
 --
 -- 有効化済みのリンター:
---   Python     → flake8       (pip install flake8)
 --   Go         → golangci-lint (brew install golangci-lint)
---   Lua        → luacheck      (brew install luacheck)
---   JS / TS    → eslint_d      (npm install -g eslint_d)  ← デーモン版で高速
+--
+-- LSP が lint するもの（ここでは足さない）:
+--   Python → ruff / JS・TS → eslint / Lua → lua_ls
 --
 -- コメントアウトで無効化しているもの（要インストール）:
 --   PHP        → phpcs         (composer global require squizlabs/php_codesniffer)
@@ -30,15 +30,9 @@ return {
     local lint = require("lint")
 
     lint.linters_by_ft = {
-      python          = { "flake8" },
       go              = { "golangcilint" },
-      lua             = { "luacheck" },
       -- PHP（phpcs が必要: composer global require squizlabs/php_codesniffer）
       -- php = { "phpcs" },
-      javascript      = { "eslint_d" }, -- eslint_d はデーモンとして常駐するため高速
-      javascriptreact = { "eslint_d" },
-      typescript      = { "eslint_d" },
-      typescriptreact = { "eslint_d" },
       -- HTML / CSS（コメントを外してインストール後に有効化）
       -- html = { "htmlhint" },  -- npm install -g htmlhint
       -- css  = { "stylelint" }, -- npm install -g stylelint

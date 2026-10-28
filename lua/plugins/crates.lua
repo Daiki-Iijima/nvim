@@ -17,7 +17,7 @@ return {
     event = { "BufRead Cargo.toml" },
     opts = {
       completion = {
-        cmp = { enabled = true },
+        cmp = { enabled = false }, -- 補完は下の in-process LSP 経由で blink.cmp に出る
       },
       lsp = {
         enabled    = true,

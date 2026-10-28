@@ -96,9 +96,7 @@ return {
         ["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
       },
 
-      -- nvim-cmp のハイライトグループをフォールバックとして使用
       appearance = {
-        use_nvim_cmp_as_default = true,
         nerd_font_variant = "mono",
       },
 
@@ -134,17 +132,12 @@ return {
 
       -- 補完ソースの設定
       sources = {
-        default = { "lazydev", "lsp", "path", "snippets", "buffer", "codecompanion" },
+        default = { "lazydev", "lsp", "path", "snippets", "buffer" },
         providers = {
           lazydev = {
             name = "LazyDev",
             module = "lazydev.integrations.blink",
             score_offset = 100, -- Neovim APIの補完を最優先
-          },
-          codecompanion = {
-            name = "CodeCompanion",
-            module = "codecompanion.providers.completion.blink",
-            enabled = true,
           },
           snippets = {
             score_offset = -3,  -- スニペットをリストの下部に押し下げる（既存のソート設定の再現）
@@ -279,6 +272,9 @@ return {
   {
     "stevearc/conform.nvim",
     event = { "BufReadPre", "BufNewFile" },
+    keys = {
+      { "<leader>f", function() require("conform").format({ async = true, lsp_format = "fallback" }) end, desc = "ファイルをフォーマット" },
+    },
     opts = {
       format_on_save = {
         timeout_ms = 2000,       -- フォーマットのタイムアウト（ms）
@@ -302,6 +298,7 @@ return {
   -- -------------------------------------------------------------------
   {
     "L3MON4D3/LuaSnip",
+    lazy = true, -- blink.cmp の依存としてだけ読み込む（起動時には読まない）
     version = "v2.*",
     build = "make install_jsregexp",
     dependencies = { "rafamadriz/friendly-snippets" },

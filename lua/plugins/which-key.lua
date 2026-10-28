@@ -21,11 +21,11 @@ return {
       { "<leader>l", group = "LSP", icon = " " },
       { "<leader>d", group = "Diagnostics / Quickfix", icon = " " },
       { "<leader>c", group = "Code / Linter", icon = "💻" },
-      { "<leader>t", group = "Trouble", icon = "🚦" },
+      { "<leader>t", group = "Diagnostics / Symbols", icon = "🚦" },
       { "<leader>s", group = "Search / Replace", icon = "🔁" },
       { "<leader>u", group = "Toggle / UI Options", icon = "⚙️" },
       { "<leader>n", group = "Node / package.json", icon = "📦" },
-      { "<leader>a", group = "AI (CodeCompanion)", icon = "🤖" },
+      { "<leader>a", group = "AI (omp)", icon = "🤖" },
     },
   },
 }

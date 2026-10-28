@@ -11,7 +11,7 @@
 --   <F11>        -- ステップイン
 --   <F12>        -- ステップアウト
 --   <leader>dR   -- REPL を開く
---   <leader>dU   -- DAP UI の表示切替
+--   <leader>dU   -- DAP の画面（nvim-dap-view）の表示切替
 --   <leader>dl   -- 直前のデバッグを再実行
 
 return {
@@ -30,44 +30,13 @@ return {
     },
     dependencies = {
       ------------------------------------------------------------
-      -- DAP UI
+      -- DAP の画面（変数・ブレークポイント・スタック・REPL を下のタブで切り替え）
       ------------------------------------------------------------
       {
-        "rcarriga/nvim-dap-ui",
-        dependencies = { "nvim-neotest/nvim-nio" },
-        config = function()
-          local dap    = require("dap")
-          local dapui  = require("dapui")
-
-          dapui.setup({
-            icons = { expanded = "▾", collapsed = "▸", current_frame = "▸" },
-            layouts = {
-              {
-                elements = {
-                  { id = "scopes",      size = 0.4 },
-                  { id = "breakpoints", size = 0.15 },
-                  { id = "stacks",      size = 0.25 },
-                  { id = "watches",     size = 0.2 },
-                },
-                size = 40,
-                position = "left",
-              },
-              {
-                elements = {
-                  { id = "repl",    size = 0.5 },
-                  { id = "console", size = 0.5 },
-                },
-                size = 10,
-                position = "bottom",
-              },
-            },
-          })
-
-          -- デバッグ開始/終了時に UI を自動開閉
-          dap.listeners.after.event_initialized["dapui_config"]  = function() dapui.open() end
-          dap.listeners.before.event_terminated["dapui_config"]  = function() dapui.close() end
-          dap.listeners.before.event_exited["dapui_config"]      = function() dapui.close() end
-        end,
+        "igorlfs/nvim-dap-view",
+        opts = {
+          auto_toggle = true, -- デバッグ開始で開き、終了で閉じる
+        },
       },
 
       ------------------------------------------------------------
@@ -141,7 +110,7 @@ return {
       map("n", "<F11>",      dap.step_into,         { desc = "DAP: ステップイン" })
       map("n", "<F12>",      dap.step_out,          { desc = "DAP: ステップアウト" })
       map("n", "<leader>dR", dap.repl.open,         { desc = "DAP: REPL を開く" })
-      map("n", "<leader>dU", function() require("dapui").toggle() end, { desc = "DAP: UI 切替" })
+      map("n", "<leader>dU", function() require("dap-view").toggle() end, { desc = "DAP: UI 切替" })
       map("n", "<leader>dl", dap.run_last,          { desc = "DAP: 直前を再実行" })
     end,
   },

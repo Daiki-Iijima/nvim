@@ -36,8 +36,9 @@ function M.setup()
   if ok_conform then
     conform.formatters_by_ft = conform.formatters_by_ft or {}
 
-    -- dotnet-format を使うやつ（Unity プロジェクトでも動く）
-    conform.formatters_by_ft.cs = { "dotnet_format" }
+    -- conform に dotnet_format は無い。csharpier（dotnet tool install -g csharpier）が入っていれば使い、
+    -- 無ければ csharp-ls の整形にフォールバックする
+    conform.formatters_by_ft.cs = { "csharpier" }
   end
 end
 

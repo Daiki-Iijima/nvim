@@ -33,7 +33,4 @@ M.settings = {
   },
 }
 
--- rustaceanvim が rust_analyzer を管理するため setup() は何もしない
-function M.setup() end
-
 return M

@@ -13,29 +13,15 @@
 return {
   {
     "mrcjkb/rustaceanvim",
-    version = "^5",
+    version = "^9",
     ft = { "rust" },
     init = function()
-      local loader = require("lang._loader")
-      local rust_settings = require("lang.rust").settings
-
       vim.g.rustaceanvim = {
+        -- LSP の共通キーは lang/_loader.lua の LspAttach が張る
         server = {
-          on_attach = loader.on_attach,
-          default_settings = rust_settings,
+          default_settings = require("lang.rust").settings,
         },
-        -- DAP 統合（nvim-dap が入っている場合は codelldb を自動検出）
-        dap = {
-          adapter = {
-            type    = "server",
-            port    = "${port}",
-            host    = "127.0.0.1",
-            executable = {
-              command = "codelldb",
-              args    = { "--port", "${port}" },
-            },
-          },
-        },
+        -- DAP: アダプタは書かない。codelldb / lldb-dap が PATH にあれば rustaceanvim が見つけて使う
       }
 
       -- Rust ファイル向け追加キーマップ

@@ -20,10 +20,8 @@
 return {
   {
     "kylechui/nvim-surround",
-    version = "^3.0.0", -- メジャーバージョンを固定して破壊的変更を防ぐ
+    version = "^4.0.0", -- メジャーバージョンを固定して破壊的変更を防ぐ
     event = "VeryLazy", -- 起動後の最初の操作まで読み込みを遅らせる
-    config = function()
-      require("nvim-surround").setup()
-    end,
+    -- v4 から setup() は不要（キーは plugin/ で入る）。設定を変えるときだけ opts = {} を書く
   },
 }

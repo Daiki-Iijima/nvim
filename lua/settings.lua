@@ -38,31 +38,19 @@ vim.opt.fileencoding = "utf-8"
 -- =============================================================================
 -- 診断（Diagnostics）の表示設定
 -- =============================================================================
--- カーソル位置の診断をフロートウィンドウで表示するときの見た目を設定する。
--- 実際に表示するキーマップは lua/lang/_loader.lua の on_attach() に定義されている。
+-- カーソル行の診断は下に全文（virtual_lines）、ほかの行は行末に短く（virtual_text）出す。
 vim.diagnostic.config({
+  severity_sort = true,
+  virtual_text  = { current_line = false },
+  virtual_lines = { current_line = true },
   float = {
-    border = "rounded", -- 角丸の枠線
     scope  = "cursor",  -- カーソルがある行の診断だけ表示
     source = true,      -- 診断の発生源（どの LSP か）を表示
   },
 })
 
--- =============================================================================
--- LSP フロートウィンドウの枠線を統一
--- =============================================================================
--- vim.lsp.util.open_floating_preview() にモンキーパッチを当てて、
--- hover / signature_help などすべての LSP フロートに rounded 枠線を強制適用する。
-local orig_open_floating_preview = vim.lsp.util.open_floating_preview
----@diagnostic disable-next-line: duplicate-set-field
-vim.lsp.util.open_floating_preview = function(contents, syntax, opts, ...)
-  opts            = opts or {}
-  opts.border     = opts.border or "rounded"
-  opts.max_width  = opts.max_width or 80   -- 幅を 80 桁で打ち切る
-  opts.max_height = opts.max_height or 25   -- 高さの上限
-  if opts.wrap == nil then opts.wrap = true end -- 長い行を折り返す
-  return orig_open_floating_preview(contents, syntax, opts, ...)
-end
+-- すべてのフロート（hover / signature_help / 診断）の枠線を角丸に
+vim.o.winborder = "rounded"
 
 -- =============================================================================
 -- プロバイダーの無効化（起動速度の向上と checkhealth の警告抑制）
