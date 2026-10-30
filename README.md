@@ -34,7 +34,8 @@ Neovim 0.12 + lazy.nvim の設定。`<leader>` はスペース、`<localleader>`
 | `<leader>gp` | 変更の差分を見る |
 | `<leader>aa` | omp を開く / 隠す |
 | `<leader>at` | カーソル位置 / 選択を omp に送る |
-| `<leader>t…` | 切り替え（`ts` スペル・`tw` 折り返し・`td` 診断・`th` インレイヒント） |
+| `<C-l>`（挿入モード） | AI の薄い候補を採用（`<C-]>` で消す） |
+| `<leader>t…` | 切り替え（`ts` スペル・`tw` 折り返し・`td` 診断・`th` インレイヒント・`ta` AI 補完） |
 | `S` | Flash ジャンプ（2 文字 + ラベル） |
 | `<C-_>`（Ctrl+/） | コメントの切り替え |
 | `<C-h>` `<C-j>` `<C-k>` `<C-l>` | ウィンドウ / tmux のペインを移動 |
@@ -52,7 +53,7 @@ Neovim 0.12 + lazy.nvim の設定。`<leader>` はスペース、`<localleader>`
 | `g` Git | `gg` `gs` `gr` `gS` `gR` `gu` `gp` `gb` `gB` `gd` |
 | `c` コード | `cf` フォーマット・`ce` 診断の詳細・`cl` lint・`cR` 一括置換 |
 | `a` AI (omp) | `aa` `at` `av` `af` `ap` |
-| `t` 切り替え | `ts` `tw` `tn` `td` `th` |
+| `t` 切り替え | `ts` `tw` `tn` `td` `th` `ta` |
 | `l` 言語ごと | Rust: `lm` `lo` `lp` `lr` `ld` `le` |
 
 LearnHarness は `<localleader>`（`,t` `,h` `,s` `,o` `,n` `,d`）と `<A-j>` `<A-k>`。
@@ -79,3 +80,12 @@ LearnHarness は `<localleader>`（`,t` `,h` `,s` `,o` `,n` `,d`）と `<A-j>` `
 
 - `:UsageReport` … 全期間の多い順と、使っていないキー・コマンドの一覧
 - `:UsageReport 14` … 直近 14 日だけ
+
+## AI 補完（手元のモデルだけ）
+
+挿入モードで入力が止まると（0.3 秒）、手元のモデルの候補が薄く出る。`<C-l>` で採用、`<C-]>` で消す、`<leader>ta` でオン・オフ（既定はオン）。
+外の API には送らない（minuet-ai.nvim → `localhost:11434` の ollama → `qwen2.5-coder:1.5b-base`）。
+
+- 入れ直し: `brew install ollama && brew services start ollama && ollama pull qwen2.5-coder:1.5b-base`
+- ollama は launchd（brew services）で常駐。待機中は数十 MB、モデル（約 1.1 GB）は使ったときだけ読み込み、5 分使わないと外れる
+- 止める: `brew services stop ollama`（モデルも消すなら `ollama rm qwen2.5-coder:1.5b-base`）

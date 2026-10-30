@@ -187,5 +187,10 @@ return {
     Snacks.toggle.option("relativenumber", { name = "相対行番号" }):map("<leader>tn")
     Snacks.toggle.diagnostics():map("<leader>td")
     Snacks.toggle.inlay_hints():map("<leader>th")
+    Snacks.toggle.new({
+      name = "AI 補完（手元のモデル）",
+      get = function() return vim.g.minuet_enabled ~= false end,
+      set = function(on) vim.g.minuet_enabled = on end,
+    }):map("<leader>ta")
   end,
 }
